@@ -328,39 +328,57 @@ const demoInventory = [
 
 
 /* =========================================================
-   LOAD / SAVE STORAGE
+   APPLICATION STATE
 ========================================================= */
 
 let donors = [];
+
 let recipients = [];
 
 /*
-   FIX:
-   Start with the dummy organ inventory so the
-   Available Organs section is never empty.
+    IMPORTANT:
+    Start with demo inventory so the public page
+    immediately shows available organs.
 */
+
 let inventory = demoInventory.map((item, index) => ({
+
     id: `demo-${index + 1}`,
+
     organ: item.organ,
+
     blood: item.blood,
+
     hospital: item.hospital,
+
     status: item.status,
+
     updated: item.updated,
+
     ownerId: null,
+
     demo: true
+
 }));
 
+
 let inventoryHistory = [];
+
 let requests = [];
+
 let matchHistory = [];
+
 let supabaseClient = null;
+
 let currentUser = null;
+
 let currentAppRole = "member";
+
 let isSignUpMode = false;
 
 
 /* =========================================================
-   DOM
+   DOM REFERENCES
 ========================================================= */
 
 const hospitalGrid =
@@ -428,7 +446,7 @@ const adminPanel =
 
 
 /* =========================================================
-   HOSPITALS
+   HOSPITAL RENDERING
 ========================================================= */
 
 function renderHospitals(search = "") {
@@ -546,23 +564,36 @@ function renderHospitals(search = "") {
             </article>
 
         `).join("");
+
 }
 
+
+/* =========================================================
+   HTML ESCAPE
+========================================================= */
 
 function escapeHtml(value) {
 
     const entities = {
+
         "&": "&amp;",
+
         "<": "&lt;",
+
         ">": "&gt;",
+
         '"': "&quot;",
+
         "'": "&#39;"
+
     };
 
-    return String(value ?? "").replace(
-        /[&<>"']/g,
-        character => entities[character]
-    );
+    return String(value ?? "")
+        .replace(
+            /[&<>"']/g,
+            character =>
+                entities[character]
+        );
 
 }
 
@@ -582,11 +613,14 @@ function populateHospitalSelect() {
         const option =
             document.createElement("option");
 
+
         option.value =
             hospital.name;
 
+
         option.textContent =
             hospital.name;
+
 
         recipientHospital.appendChild(option);
 
@@ -602,27 +636,51 @@ function populateHospitalSelect() {
 function renderInventory() {
 
     const isStaff = Boolean(
+
         currentUser &&
-        ["hospital", "admin"].includes(currentAppRole)
+
+        ["hospital", "admin"]
+            .includes(currentAppRole)
+
     );
 
-    inventoryForm.hidden = !isStaff;
+
+    if (inventoryForm) {
+
+        inventoryForm.hidden =
+            !isStaff;
+
+    }
 
 
     if (!inventory.length) {
 
         const emptyMessage = !currentUser
-            ? "No organ availability is currently listed."
+
+            ? "Sign in to load shared organ availability."
+
             : isStaff
+
                 ? "No availability has been added yet. Use the form above to report organs."
+
                 : "No hospital has reported organ availability yet.";
 
+
         inventoryBody.innerHTML = `
+
             <tr>
-                <td colspan="5" class="empty-table">
+
+                <td
+                    colspan="5"
+                    class="empty-table"
+                >
+
                     ${escapeHtml(emptyMessage)}
+
                 </td>
+
             </tr>
+
         `;
 
         return;
@@ -630,109 +688,136 @@ function renderInventory() {
 
 
     inventoryBody.innerHTML =
+
         inventory.map(item => {
 
             const statusClass =
+
                 item.status === "Available"
+
                     ? "available"
+
                     : item.status === "Transplanted"
+
                         ? "critical"
+
                         : item.status === "Reserved"
+
                             ? "high"
+
                             : "pending";
 
 
-            /*
-               Demo records have ownerId = null,
-               therefore they cannot be edited by staff.
-            */
             const canUpdate =
+
                 isStaff &&
-                item.ownerId === currentUser.id;
+
+                !item.demo &&
+
+                item.ownerId ===
+                    currentUser.id;
 
 
             return `
 
-            <tr>
+                <tr>
 
-                <td>
-                    <strong>
-                        ${escapeHtml(item.organ)}
-                    </strong>
-                </td>
-
-                <td>
-                    ${escapeHtml(item.blood)}
-                </td>
-
-                <td>
-                    ${escapeHtml(item.hospital)}
-                </td>
-
-                <td>
-
-                    <span class="status ${statusClass}">
-                        ${escapeHtml(item.status)}
-                    </span>
-
-                </td>
-
-                <td>
-                    ${escapeHtml(item.updated)}
-                </td>
-
-                ${
-                    canUpdate
-                        ? `
                     <td>
-                        <div class="inventory-row-controls">
 
-                            <select
-                                aria-label="Availability for ${escapeHtml(item.organ)}"
-                                data-inventory-status
-                            >
+                        <strong>
+                            ${escapeHtml(item.organ)}
+                        </strong>
 
-                                ${
-                                    [
-                                        "Available",
-                                        "Reserved",
-                                        "Transplanted",
-                                        "Unavailable"
-                                    ]
-                                    .map(status => `
-                                        <option
-                                            ${
-                                                item.status === status
-                                                    ? "selected"
-                                                    : ""
-                                            }
-                                        >
-                                            ${status}
-                                        </option>
-                                    `)
-                                    .join("")
-                                }
-
-                            </select>
-
-                            <button
-                                type="button"
-                                data-inventory-save="${escapeHtml(item.id)}"
-                            >
-                                Save
-                            </button>
-
-                        </div>
                     </td>
-                    `
-                        : ""
-                }
 
-            </tr>
 
-        `;
+                    <td>
+                        ${escapeHtml(item.blood)}
+                    </td>
+
+
+                    <td>
+                        ${escapeHtml(item.hospital)}
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="status ${statusClass}"
+                        >
+
+                            ${escapeHtml(item.status)}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <div>
+                            ${escapeHtml(item.updated)}
+                        </div>
+
+
+                        ${canUpdate ? `
+
+                            <div
+                                class="inventory-row-controls"
+                            >
+
+                                <select
+                                    aria-label="Availability for ${escapeHtml(item.organ)}"
+                                    data-inventory-status
+                                >
+
+                                    ${
+                                        [
+                                            "Available",
+                                            "Reserved",
+                                            "Transplanted",
+                                            "Unavailable"
+                                        ]
+
+                                        .map(status => `
+
+                                            <option
+                                                ${
+                                                    item.status === status
+                                                        ? "selected"
+                                                        : ""
+                                                }
+                                            >
+                                                ${status}
+                                            </option>
+
+                                        `)
+                                        .join("")
+                                    }
+
+                                </select>
+
+
+                                <button
+                                    type="button"
+                                    data-inventory-save="${escapeHtml(item.id)}"
+                                >
+                                    Save
+                                </button>
+
+                            </div>
+
+                        ` : ""}
+
+                    </td>
+
+                </tr>
+
+            `;
 
         }).join("");
+
 }
 
 
@@ -745,11 +830,20 @@ function renderRequests() {
     if (!requests.length) {
 
         requestsBody.innerHTML = `
+
             <tr>
-                <td colspan="6" class="empty-table">
+
+                <td
+                    colspan="6"
+                    class="empty-table"
+                >
+
                     No requests available.
+
                 </td>
+
             </tr>
+
         `;
 
         return;
@@ -757,17 +851,31 @@ function renderRequests() {
 
 
     requestsBody.innerHTML =
+
         requests.map(request => {
 
-            let className = "pending";
+            let className =
+                "pending";
 
 
-            if (request.urgency === "Critical") {
-                className = "critical";
+            if (
+                request.urgency ===
+                "Critical"
+            ) {
+
+                className =
+                    "critical";
+
             }
 
-            else if (request.urgency === "High") {
-                className = "high";
+            else if (
+                request.urgency ===
+                "High"
+            ) {
+
+                className =
+                    "high";
+
             }
 
 
@@ -776,35 +884,50 @@ function renderRequests() {
                 <tr>
 
                     <td>
+
                         <strong>
                             ${escapeHtml(request.name)}
                         </strong>
+
                     </td>
+
 
                     <td>
                         ${escapeHtml(request.organ)}
                     </td>
 
+
                     <td>
                         ${escapeHtml(request.blood)}
                     </td>
+
 
                     <td>
                         ${escapeHtml(request.hospital)}
                     </td>
 
+
                     <td>
 
-                        <span class="status ${className}">
+                        <span
+                            class="status ${className}"
+                        >
+
                             ${escapeHtml(request.urgency)}
+
                         </span>
 
                     </td>
 
+
                     <td>
 
-                        <span class="status pending">
+                        <span
+                            class="status pending"
+                        >
+
                             ${escapeHtml(request.status)}
+
                         </span>
 
                     </td>
@@ -814,6 +937,7 @@ function renderRequests() {
             `;
 
         }).join("");
+
 }
 
 
@@ -825,17 +949,27 @@ function renderDonorHistory() {
 
     document.getElementById(
         "donorHistoryCount"
-    ).textContent = donors.length;
+    ).textContent =
+        donors.length;
 
 
     if (!donors.length) {
 
         donorHistoryBody.innerHTML = `
+
             <tr>
-                <td colspan="6" class="empty-table">
+
+                <td
+                    colspan="6"
+                    class="empty-table"
+                >
+
                     No donor registrations yet.
+
                 </td>
+
             </tr>
+
         `;
 
         return;
@@ -843,39 +977,52 @@ function renderDonorHistory() {
 
 
     donorHistoryBody.innerHTML =
-        donors.slice().reverse().map(donor => `
 
-            <tr>
+        donors
+            .slice()
+            .reverse()
+            .map(donor => `
 
-                <td>
-                    <strong>
-                        ${escapeHtml(donor.name)}
-                    </strong>
-                </td>
+                <tr>
 
-                <td>
-                    ${escapeHtml(donor.age)}
-                </td>
+                    <td>
 
-                <td>
-                    ${escapeHtml(donor.blood)}
-                </td>
+                        <strong>
+                            ${escapeHtml(donor.name)}
+                        </strong>
 
-                <td>
-                    ${escapeHtml(donor.organ)}
-                </td>
+                    </td>
 
-                <td>
-                    ${escapeHtml(donor.city)}
-                </td>
 
-                <td>
-                    ${escapeHtml(donor.registeredAt)}
-                </td>
+                    <td>
+                        ${escapeHtml(donor.age)}
+                    </td>
 
-            </tr>
 
-        `).join("");
+                    <td>
+                        ${escapeHtml(donor.blood)}
+                    </td>
+
+
+                    <td>
+                        ${escapeHtml(donor.organ)}
+                    </td>
+
+
+                    <td>
+                        ${escapeHtml(donor.city)}
+                    </td>
+
+
+                    <td>
+                        ${escapeHtml(donor.registeredAt)}
+                    </td>
+
+                </tr>
+
+            `)
+            .join("");
+
 }
 
 
@@ -887,17 +1034,27 @@ function renderRecipientHistory() {
 
     document.getElementById(
         "recipientHistoryCount"
-    ).textContent = recipients.length;
+    ).textContent =
+        recipients.length;
 
 
     if (!recipients.length) {
 
         recipientHistoryBody.innerHTML = `
+
             <tr>
-                <td colspan="6" class="empty-table">
+
+                <td
+                    colspan="6"
+                    class="empty-table"
+                >
+
                     No recipient requests yet.
+
                 </td>
+
             </tr>
+
         `;
 
         return;
@@ -905,57 +1062,83 @@ function renderRecipientHistory() {
 
 
     recipientHistoryBody.innerHTML =
-        recipients.slice().reverse().map(recipient => `
 
-            <tr>
+        recipients
+            .slice()
+            .reverse()
+            .map(recipient => `
 
-                <td>
-                    <strong>
-                        ${escapeHtml(recipient.name)}
-                    </strong>
-                </td>
+                <tr>
 
-                <td>
-                    ${escapeHtml(recipient.organ)}
-                </td>
+                    <td>
 
-                <td>
-                    ${escapeHtml(recipient.blood)}
-                </td>
+                        <strong>
+                            ${escapeHtml(recipient.name)}
+                        </strong>
 
-                <td>
-                    ${escapeHtml(recipient.hospital)}
-                </td>
+                    </td>
 
-                <td>
 
-                    <span class="status ${
-                        recipient.urgency === "Critical"
-                            ? "critical"
-                            : recipient.urgency === "High"
-                                ? "high"
-                                : "pending"
-                    }">
+                    <td>
+                        ${escapeHtml(recipient.organ)}
+                    </td>
 
-                        ${escapeHtml(recipient.urgency)}
 
-                    </span>
+                    <td>
+                        ${escapeHtml(recipient.blood)}
+                    </td>
 
-                </td>
 
-                <td>
+                    <td>
+                        ${escapeHtml(recipient.hospital)}
+                    </td>
 
-                    <span class="status pending">
-                        ${escapeHtml(
-                            recipient.status || "Pending"
-                        )}
-                    </span>
 
-                </td>
+                    <td>
 
-            </tr>
+                        <span
+                            class="status ${
+                                recipient.urgency === "Critical"
 
-        `).join("");
+                                    ? "critical"
+
+                                    : recipient.urgency === "High"
+
+                                        ? "high"
+
+                                        : "pending"
+                            }"
+                        >
+
+                            ${escapeHtml(
+                                recipient.urgency
+                            )}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="status pending"
+                        >
+
+                            ${escapeHtml(
+                                recipient.status ||
+                                "Pending"
+                            )}
+
+                        </span>
+
+                    </td>
+
+                </tr>
+
+            `)
+            .join("");
+
 }
 
 
@@ -967,17 +1150,28 @@ function renderOrganHistory() {
 
     document.getElementById(
         "organHistoryCount"
-    ).textContent = inventoryHistory.length;
+    ).textContent =
+        inventoryHistory.length;
 
 
     if (!inventoryHistory.length) {
 
         organHistoryBody.innerHTML = `
+
             <tr>
-                <td colspan="8" class="empty-table">
-                    No availability changes have been recorded yet.
+
+                <td
+                    colspan="8"
+                    class="empty-table"
+                >
+
+                    No availability changes
+                    have been recorded yet.
+
                 </td>
+
             </tr>
+
         `;
 
         return;
@@ -985,63 +1179,88 @@ function renderOrganHistory() {
 
 
     organHistoryBody.innerHTML =
-        inventoryHistory.map(item => `
 
-            <tr>
+        inventoryHistory
+            .map(item => `
 
-                <td>
-                    <strong>
-                        ${escapeHtml(item.organ)}
-                    </strong>
-                </td>
+                <tr>
 
-                <td>
-                    ${escapeHtml(item.blood)}
-                </td>
+                    <td>
 
-                <td>
-                    ${escapeHtml(item.hospital)}
-                </td>
+                        <strong>
+                            ${escapeHtml(item.organ)}
+                        </strong>
 
-                <td>
+                    </td>
 
-                    <span class="status ${
-                        item.action === "Removed"
-                            ? "critical"
-                            : item.action === "Added"
-                                ? "available"
-                                : "pending"
-                    }">
 
-                        ${escapeHtml(item.action)}
+                    <td>
+                        ${escapeHtml(item.blood)}
+                    </td>
 
-                    </span>
 
-                </td>
+                    <td>
+                        ${escapeHtml(item.hospital)}
+                    </td>
 
-                <td>
-                    ${escapeHtml(
-                        item.previousStatus || "-"
-                    )}
-                </td>
 
-                <td>
-                    ${escapeHtml(
-                        item.status || "-"
-                    )}
-                </td>
+                    <td>
 
-                <td>
-                    ${escapeHtml(item.updatedBy)}
-                </td>
+                        <span
+                            class="status ${
+                                item.action === "Removed"
 
-                <td>
-                    ${escapeHtml(item.updated)}
-                </td>
+                                    ? "critical"
 
-            </tr>
+                                    : item.action === "Added"
 
-        `).join("");
+                                        ? "available"
+
+                                        : "pending"
+                            }"
+                        >
+
+                            ${escapeHtml(
+                                item.action
+                            )}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        ${escapeHtml(
+                            item.previousStatus || "-"
+                        )}
+                    </td>
+
+
+                    <td>
+                        ${escapeHtml(
+                            item.status || "-"
+                        )}
+                    </td>
+
+
+                    <td>
+                        ${escapeHtml(
+                            item.updatedBy
+                        )}
+                    </td>
+
+
+                    <td>
+                        ${escapeHtml(
+                            item.updated
+                        )}
+                    </td>
+
+                </tr>
+
+            `)
+            .join("");
+
 }
 
 
@@ -1053,45 +1272,54 @@ function updateStats() {
 
     document.getElementById(
         "donorCount"
-    ).textContent = donors.length;
+    ).textContent =
+        donors.length;
 
 
     document.getElementById(
         "recipientCount"
-    ).textContent = recipients.length;
+    ).textContent =
+        recipients.length;
 
 
     document.getElementById(
         "hospitalCount"
-    ).textContent = hospitals.length;
+    ).textContent =
+        hospitals.length;
 
 
     document.getElementById(
         "organCount"
-    ).textContent = inventory.length;
+    ).textContent =
+        inventory.length;
 
 
     document.getElementById(
         "historyDonorTotal"
-    ).textContent = donors.length;
+    ).textContent =
+        donors.length;
 
 
     document.getElementById(
         "historyRecipientTotal"
-    ).textContent = recipients.length;
+    ).textContent =
+        recipients.length;
 
 
     document.getElementById(
         "historyOrganTotal"
-    ).textContent = inventory.length;
+    ).textContent =
+        inventory.length;
 
 
     document.getElementById(
         "historyMatchTotal"
-    ).textContent = matchHistory.length;
+    ).textContent =
+        matchHistory.length;
 
 
     updateAdminStats();
+
 }
 
 
@@ -1103,22 +1331,27 @@ function updateAdminStats() {
 
     document.getElementById(
         "adminDonors"
-    ).textContent = donors.length;
+    ).textContent =
+        donors.length;
 
 
     document.getElementById(
         "adminRecipients"
-    ).textContent = requests.length;
+    ).textContent =
+        requests.length;
 
 
     document.getElementById(
         "adminHospitals"
-    ).textContent = hospitals.length;
+    ).textContent =
+        hospitals.length;
 
 
     document.getElementById(
         "adminOrgans"
-    ).textContent = inventory.length;
+    ).textContent =
+        inventory.length;
+
 }
 
 
@@ -1129,57 +1362,94 @@ function updateAdminStats() {
 let toastTimer;
 
 
-function showToast(title, message) {
+function showToast(
+    title,
+    message
+) {
 
     document.getElementById(
         "toastTitle"
-    ).textContent = title;
+    ).textContent =
+        title;
 
 
     document.getElementById(
         "toastMessage"
-    ).textContent = message;
+    ).textContent =
+        message;
 
 
-    toast.classList.add("show");
+    toast.classList.add(
+        "show"
+    );
 
 
-    clearTimeout(toastTimer);
+    clearTimeout(
+        toastTimer
+    );
 
 
-    toastTimer = setTimeout(() => {
+    toastTimer =
+        setTimeout(
+            () => {
 
-        toast.classList.remove("show");
+                toast.classList.remove(
+                    "show"
+                );
 
-    }, 4000);
+            },
+            4000
+        );
+
 }
 
+
+/* =========================================================
+   RENDER ALL DATA
+========================================================= */
 
 function renderData() {
 
     renderInventory();
+
     renderRequests();
+
     renderDonorHistory();
+
     renderRecipientHistory();
+
     renderOrganHistory();
+
     updateStats();
 
 }
 
 
+/* =========================================================
+   AUTH UI
+========================================================= */
+
 function renderAuthState() {
 
     const openLogin =
-        document.getElementById("openLogin");
+        document.getElementById(
+            "openLogin"
+        );
+
 
     const isStaff =
-        ["hospital", "admin"].includes(
+        [
+            "hospital",
+            "admin"
+        ].includes(
             currentAppRole
         );
 
 
     openLogin.innerHTML = currentUser
+
         ? '<i class="fa-solid fa-right-from-bracket"></i> Sign out'
+
         : '<i class="fa-solid fa-right-to-bracket"></i> Login';
 
 
@@ -1204,7 +1474,9 @@ function renderAuthState() {
         currentUser &&
         isStaff
     ) {
+
         updateAdminStats();
+
     }
 
 }
@@ -1212,38 +1484,76 @@ function renderAuthState() {
 
 /* =========================================================
    CLEAR PRIVATE DATA
+   IMPORTANT FIX
 ========================================================= */
 
 function clearPrivateData() {
 
+    /*
+        Donor and recipient data is private,
+        so it is cleared when the user logs out.
+    */
+
     donors = [];
+
     recipients = [];
 
+
     /*
-       FIX:
-       Do not remove the demo organ inventory
-       when the user signs out.
+        DO NOT clear inventory completely.
+
+        The public website should continue showing
+        the demonstration organ availability.
+
+        This is the main fix for:
+
+        "No organs available."
     */
-    inventory = demoInventory.map(
-        (item, index) => ({
-            id: `demo-${index + 1}`,
-            organ: item.organ,
-            blood: item.blood,
-            hospital: item.hospital,
-            status: item.status,
-            updated: item.updated,
-            ownerId: null,
-            demo: true
-        })
-    );
+
+    inventory =
+        demoInventory.map(
+            (item, index) => ({
+
+                id:
+                    `demo-${index + 1}`,
+
+                organ:
+                    item.organ,
+
+                blood:
+                    item.blood,
+
+                hospital:
+                    item.hospital,
+
+                status:
+                    item.status,
+
+                updated:
+                    item.updated,
+
+                ownerId:
+                    null,
+
+                demo:
+                    true
+
+            })
+        );
+
 
     inventoryHistory = [];
+
     requests = [];
+
     matchHistory = [];
 
-    currentAppRole = "member";
+    currentAppRole =
+        "member";
+
 
     renderAuthState();
+
     renderData();
 
 }
@@ -1257,26 +1567,34 @@ function mapDonor(row) {
 
     return {
 
-        id: row.id,
+        id:
+            row.id,
 
-        name: row.name,
+        name:
+            row.name,
 
-        age: row.age,
+        age:
+            row.age,
 
-        blood: row.blood_group,
+        blood:
+            row.blood_group,
 
-        organ: row.organ,
+        organ:
+            row.organ,
 
-        city: row.city,
+        city:
+            row.city,
 
-        phone: row.phone,
+        phone:
+            row.phone,
 
         registeredAt:
             new Date(
                 row.created_at
             ).toLocaleDateString(),
 
-        type: "Registered"
+        type:
+            "Registered"
 
     };
 
@@ -1291,28 +1609,37 @@ function mapRecipient(row) {
 
     return {
 
-        id: row.id,
+        id:
+            row.id,
 
-        name: row.name,
+        name:
+            row.name,
 
-        age: row.age,
+        age:
+            row.age,
 
-        blood: row.blood_group,
+        blood:
+            row.blood_group,
 
-        organ: row.organ,
+        organ:
+            row.organ,
 
-        urgency: row.urgency,
+        urgency:
+            row.urgency,
 
-        hospital: row.hospital,
+        hospital:
+            row.hospital,
 
-        phone: row.phone,
+        phone:
+            row.phone,
 
         registeredAt:
             new Date(
                 row.created_at
             ).toLocaleDateString(),
 
-        status: row.status
+        status:
+            row.status
 
     };
 
@@ -1325,6 +1652,11 @@ function mapRecipient(row) {
 
 async function loadApplicationData() {
 
+    /*
+        If the user is not logged in,
+        keep the demo inventory visible.
+    */
+
     if (
         !supabaseClient ||
         !currentUser
@@ -1333,6 +1665,7 @@ async function loadApplicationData() {
         clearPrivateData();
 
         return;
+
     }
 
 
@@ -1341,13 +1674,21 @@ async function loadApplicationData() {
 
 
     const [
+
         profileResult,
+
         donorResult,
+
         recipientResult,
+
         inventoryResult,
+
         matchResult,
+
         inventoryHistoryResult
+
     ] =
+
         await Promise.all([
 
             supabaseClient
@@ -1418,6 +1759,7 @@ async function loadApplicationData() {
     ) {
 
         return;
+
     }
 
 
@@ -1437,59 +1779,18 @@ async function loadApplicationData() {
 
 
     /* =====================================================
-       FIXED ORGAN INVENTORY LOADING
-       =====================================================
+       ORGAN INVENTORY LOADING
 
-       Priority:
+       If Supabase has real inventory records:
+       use those.
 
-       1. If Supabase has real inventory,
-          use the real records.
+       If Supabase is empty:
+       use demo inventory.
 
-       2. If Supabase inventory is empty,
-          use demoInventory.
-
-       3. If the inventory query fails,
-          also use demoInventory so the
-          Available Organs section does not
-          become blank.
+       This keeps Available Organs populated.
     ===================================================== */
 
-    if (inventoryResult.error) {
-
-        inventory =
-            demoInventory.map(
-                (item, index) => ({
-
-                    id:
-                        `demo-${index + 1}`,
-
-                    organ:
-                        item.organ,
-
-                    blood:
-                        item.blood,
-
-                    hospital:
-                        item.hospital,
-
-                    status:
-                        item.status,
-
-                    updated:
-                        item.updated,
-
-                    ownerId:
-                        null,
-
-                    demo:
-                        true
-
-                })
-            );
-
-    }
-
-    else if (
+    if (
         inventoryResult.data &&
         inventoryResult.data.length > 0
     ) {
@@ -1515,9 +1816,11 @@ async function loadApplicationData() {
 
                     updated:
                         row.updated_at
+
                             ? new Date(
                                 row.updated_at
                             ).toLocaleString()
+
                             : "Recently updated",
 
                     ownerId:
@@ -1534,10 +1837,10 @@ async function loadApplicationData() {
     else {
 
         /*
-           Supabase is working,
-           but the inventory table is empty.
+            Supabase inventory is empty
+            or unavailable.
 
-           Use demonstration inventory.
+            Use demo records.
         */
 
         inventory =
@@ -1575,66 +1878,72 @@ async function loadApplicationData() {
 
 
     inventoryHistory =
-        (inventoryHistoryResult.data || [])
-            .map(row => ({
+        (
+            inventoryHistoryResult.data ||
+            []
+        ).map(row => ({
 
-                organ:
-                    row.organ,
+            organ:
+                row.organ,
 
-                blood:
-                    row.blood_group,
+            blood:
+                row.blood_group,
 
-                hospital:
-                    row.hospital_name,
+            hospital:
+                row.hospital_name,
 
-                action:
-                    row.action,
+            action:
+                row.action,
 
-                previousStatus:
-                    row.old_status,
+            previousStatus:
+                row.old_status,
 
-                status:
-                    row.new_status,
+            status:
+                row.new_status,
 
-                updatedBy:
-                    row.changed_by ===
+            updatedBy:
+                row.changed_by ===
                     currentUser.id
-                        ? "You"
-                        : "Hospital staff",
 
-                updated:
-                    new Date(
-                        row.changed_at
-                    ).toLocaleString()
+                    ? "You"
 
-            }));
+                    : "Hospital staff",
+
+            updated:
+                new Date(
+                    row.changed_at
+                ).toLocaleString()
+
+        }));
 
 
     matchHistory =
-        (matchResult.data || [])
-            .map(row => ({
+        (
+            matchResult.data ||
+            []
+        ).map(row => ({
 
-                id:
-                    row.id,
+            id:
+                row.id,
 
-                organ:
-                    row.organ,
+            organ:
+                row.organ,
 
-                blood:
-                    row.blood_group,
+            blood:
+                row.blood_group,
 
-                urgency:
-                    row.urgency,
+            urgency:
+                row.urgency,
 
-                matchCount:
-                    row.match_count,
+            matchCount:
+                row.match_count,
 
-                timestamp:
-                    new Date(
-                        row.created_at
-                    ).toLocaleString()
+            timestamp:
+                new Date(
+                    row.created_at
+                ).toLocaleString()
 
-            }));
+        }));
 
 
     requests =
@@ -1667,14 +1976,17 @@ async function loadApplicationData() {
 
 
     renderAuthState();
+
     renderData();
 
 
-    if (inventoryResult.error) {
+    if (
+        inventoryResult.error
+    ) {
 
         showToast(
-            "Demo availability loaded",
-            "Supabase inventory could not load, so demonstration organs are being displayed."
+            "Organ availability could not load",
+            inventoryResult.error.message
         );
 
     }
@@ -1684,8 +1996,11 @@ async function loadApplicationData() {
     ) {
 
         showToast(
+
             "Availability history needs setup",
+
             "Run supabase-inventory-history-migration.sql. Current availability will still load."
+
         );
 
     }
@@ -1730,25 +2045,35 @@ async function initializeSupabase() {
 
 
     if (
+
         !config?.url ||
+
         !config?.anonKey ||
+
         config.url.includes(
             "YOUR_PROJECT"
         ) ||
+
         config.anonKey.includes(
             "YOUR_SUPABASE"
         ) ||
+
         !window.supabase?.createClient
+
     ) {
+
+        /*
+            IMPORTANT:
+
+            Supabase is optional for the public demo.
+
+            The demo inventory still works.
+        */
 
         renderAuthState();
 
-        showToast(
-            "Supabase setup needed",
-            "Add your project URL and anon key in supabase-config.js."
-        );
-
         return;
+
     }
 
 
@@ -1783,7 +2108,9 @@ async function initializeSupabase() {
         data,
         error
     } =
-        await supabaseClient.auth.getSession();
+        await supabaseClient
+            .auth
+            .getSession();
 
 
     if (error) {
@@ -1794,6 +2121,7 @@ async function initializeSupabase() {
         );
 
         return;
+
     }
 
 
@@ -1808,7 +2136,7 @@ async function initializeSupabase() {
 
 
 /* =========================================================
-   REQUIRE AUTHENTICATION
+   AUTHENTICATION REQUIRED
 ========================================================= */
 
 function requireAuthentication() {
@@ -1819,6 +2147,7 @@ function requireAuthentication() {
     ) {
 
         return true;
+
     }
 
 
@@ -1830,11 +2159,15 @@ function requireAuthentication() {
     showToast(
 
         supabaseClient
+
             ? "Sign in required"
+
             : "Supabase setup needed",
 
         supabaseClient
+
             ? "Create an account or sign in before submitting a record."
+
             : "Configure Supabase before submitting a record."
 
     );
@@ -1846,7 +2179,7 @@ function requireAuthentication() {
 
 
 /* =========================================================
-   LOGIN / LOGOUT TOGGLE
+   TOGGLE AUTHENTICATION
 ========================================================= */
 
 async function toggleAuthentication(
@@ -1864,7 +2197,9 @@ async function toggleAuthentication(
         const {
             error
         } =
-            await supabaseClient.auth.signOut();
+            await supabaseClient
+                .auth
+                .signOut();
 
 
         if (error) {
@@ -1875,6 +2210,7 @@ async function toggleAuthentication(
             );
 
             return;
+
         }
 
 
@@ -1890,7 +2226,9 @@ async function toggleAuthentication(
             "Your account has been signed out."
         );
 
+
         return;
+
     }
 
 
@@ -1912,53 +2250,73 @@ donorForm.addEventListener(
         event.preventDefault();
 
 
-        if (!requireAuthentication()) {
+        if (
+            !requireAuthentication()
+        ) {
 
             return;
+
         }
 
 
         const donor = {
 
             name:
-                document.getElementById(
-                    "donorName"
-                ).value.trim(),
+                document
+                    .getElementById(
+                        "donorName"
+                    )
+                    .value
+                    .trim(),
 
             age:
                 Number(
-                    document.getElementById(
-                        "donorAge"
-                    ).value
+                    document
+                        .getElementById(
+                            "donorAge"
+                        )
+                        .value
                 ),
 
             blood_group:
-                document.getElementById(
-                    "donorBlood"
-                ).value,
+                document
+                    .getElementById(
+                        "donorBlood"
+                    )
+                    .value,
 
             organ:
-                document.getElementById(
-                    "donorOrgan"
-                ).value,
+                document
+                    .getElementById(
+                        "donorOrgan"
+                    )
+                    .value,
 
             city:
-                document.getElementById(
-                    "donorCity"
-                ).value.trim(),
+                document
+                    .getElementById(
+                        "donorCity"
+                    )
+                    .value
+                    .trim(),
 
             phone:
-                document.getElementById(
-                    "donorPhone"
-                ).value.trim(),
+                document
+                    .getElementById(
+                        "donorPhone"
+                    )
+                    .value
+                    .trim(),
 
             owner_id:
                 currentUser.id,
 
             consent:
-                document.getElementById(
-                    "donorConsent"
-                ).checked
+                document
+                    .getElementById(
+                        "donorConsent"
+                    )
+                    .checked
 
         };
 
@@ -1968,7 +2326,9 @@ donorForm.addEventListener(
         } =
             await supabaseClient
                 .from("donors")
-                .insert(donor);
+                .insert(
+                    donor
+                );
 
 
         if (error) {
@@ -1979,6 +2339,7 @@ donorForm.addEventListener(
             );
 
             return;
+
         }
 
 
@@ -1998,7 +2359,7 @@ donorForm.addEventListener(
 
 
 /* =========================================================
-   INVENTORY REGISTRATION
+   INVENTORY ADD
 ========================================================= */
 
 inventoryForm.addEventListener(
@@ -2009,19 +2370,28 @@ inventoryForm.addEventListener(
 
 
         if (
+
             !currentUser ||
-            !["hospital", "admin"]
-                .includes(
-                    currentAppRole
-                )
+
+            ![
+                "hospital",
+                "admin"
+            ].includes(
+                currentAppRole
+            )
+
         ) {
 
             showToast(
+
                 "Staff access required",
+
                 "Only approved hospital staff can report organ availability."
+
             );
 
             return;
+
         }
 
 
@@ -2036,24 +2406,32 @@ inventoryForm.addEventListener(
                         currentUser.id,
 
                     organ:
-                        document.getElementById(
-                            "inventoryOrgan"
-                        ).value,
+                        document
+                            .getElementById(
+                                "inventoryOrgan"
+                            )
+                            .value,
 
                     blood_group:
-                        document.getElementById(
-                            "inventoryBlood"
-                        ).value,
+                        document
+                            .getElementById(
+                                "inventoryBlood"
+                            )
+                            .value,
 
                     hospital_name:
-                        document.getElementById(
-                            "inventoryHospital"
-                        ).value,
+                        document
+                            .getElementById(
+                                "inventoryHospital"
+                            )
+                            .value,
 
                     status:
-                        document.getElementById(
-                            "inventoryStatus"
-                        ).value
+                        document
+                            .getElementById(
+                                "inventoryStatus"
+                            )
+                            .value
 
                 });
 
@@ -2066,6 +2444,7 @@ inventoryForm.addEventListener(
             );
 
             return;
+
         }
 
 
@@ -2101,6 +2480,7 @@ inventoryBody.addEventListener(
         if (!saveButton) {
 
             return;
+
         }
 
 
@@ -2134,6 +2514,7 @@ inventoryBody.addEventListener(
             );
 
             return;
+
         }
 
 
@@ -2148,6 +2529,7 @@ inventoryBody.addEventListener(
             );
 
             return;
+
         }
 
 
@@ -2160,9 +2542,7 @@ inventoryBody.addEventListener(
             error
         } =
             await supabaseClient
-
                 .from("inventory")
-
                 .update({
 
                     status:
@@ -2173,19 +2553,15 @@ inventoryBody.addEventListener(
                             .toISOString()
 
                 })
-
                 .eq(
                     "id",
                     item.id
                 )
-
                 .eq(
                     "owner_id",
                     currentUser.id
                 )
-
                 .select("id")
-
                 .maybeSingle();
 
 
@@ -2199,12 +2575,16 @@ inventoryBody.addEventListener(
 
 
             showToast(
+
                 "Availability was not updated",
+
                 error?.message ||
                     "The record could not be updated."
+
             );
 
             return;
+
         }
 
 
@@ -2231,50 +2611,69 @@ recipientForm.addEventListener(
         event.preventDefault();
 
 
-        if (!requireAuthentication()) {
+        if (
+            !requireAuthentication()
+        ) {
 
             return;
+
         }
 
 
         const recipient = {
 
             name:
-                document.getElementById(
-                    "recipientName"
-                ).value.trim(),
+                document
+                    .getElementById(
+                        "recipientName"
+                    )
+                    .value
+                    .trim(),
 
             age:
                 Number(
-                    document.getElementById(
-                        "recipientAge"
-                    ).value
+                    document
+                        .getElementById(
+                            "recipientAge"
+                        )
+                        .value
                 ),
 
             blood_group:
-                document.getElementById(
-                    "recipientBlood"
-                ).value,
+                document
+                    .getElementById(
+                        "recipientBlood"
+                    )
+                    .value,
 
             organ:
-                document.getElementById(
-                    "recipientOrgan"
-                ).value,
+                document
+                    .getElementById(
+                        "recipientOrgan"
+                    )
+                    .value,
 
             urgency:
-                document.getElementById(
-                    "recipientUrgency"
-                ).value,
+                document
+                    .getElementById(
+                        "recipientUrgency"
+                    )
+                    .value,
 
             hospital:
-                document.getElementById(
-                    "recipientHospital"
-                ).value,
+                document
+                    .getElementById(
+                        "recipientHospital"
+                    )
+                    .value,
 
             phone:
-                document.getElementById(
-                    "recipientPhone"
-                ).value.trim(),
+                document
+                    .getElementById(
+                        "recipientPhone"
+                    )
+                    .value
+                    .trim(),
 
             owner_id:
                 currentUser.id,
@@ -2290,7 +2689,9 @@ recipientForm.addEventListener(
         } =
             await supabaseClient
                 .from("recipients")
-                .insert(recipient);
+                .insert(
+                    recipient
+                );
 
 
         if (error) {
@@ -2301,6 +2702,7 @@ recipientForm.addEventListener(
             );
 
             return;
+
         }
 
 
@@ -2335,9 +2737,7 @@ function calculateMatchScore(
     let reasons = [];
 
 
-    /* =====================================================
-       ORGAN MATCH
-    ===================================================== */
+    /* Organ */
 
     if (
         donor.organ ===
@@ -2353,9 +2753,7 @@ function calculateMatchScore(
     }
 
 
-    /* =====================================================
-       BLOOD MATCH
-    ===================================================== */
+    /* Blood */
 
     if (
         donor.blood ===
@@ -2371,9 +2769,7 @@ function calculateMatchScore(
     }
 
 
-    /* =====================================================
-       LOCATION
-    ===================================================== */
+    /* Location */
 
     if (
         donor.city.toLowerCase() ===
@@ -2389,9 +2785,7 @@ function calculateMatchScore(
     }
 
 
-    /* =====================================================
-       URGENCY
-    ===================================================== */
+    /* Urgency */
 
     if (
         urgency ===
@@ -2456,37 +2850,48 @@ matchForm.addEventListener(
         event.preventDefault();
 
 
-        if (!requireAuthentication()) {
+        if (
+            !requireAuthentication()
+        ) {
 
             return;
+
         }
 
 
         const organ =
-            document.getElementById(
-                "matchOrgan"
-            ).value;
+            document
+                .getElementById(
+                    "matchOrgan"
+                )
+                .value;
 
 
         const blood =
-            document.getElementById(
-                "matchBlood"
-            ).value;
+            document
+                .getElementById(
+                    "matchBlood"
+                )
+                .value;
 
 
         const urgency =
-            document.getElementById(
-                "matchUrgency"
-            ).value;
+            document
+                .getElementById(
+                    "matchUrgency"
+                )
+                .value;
 
 
         /*
             Matching:
 
-            First we filter by organ.
+            First filter by organ.
 
-            Then the algorithm scores blood group,
-            location and urgency.
+            Then calculate score using:
+            blood group,
+            location,
+            urgency.
         */
 
         const candidates =
@@ -2537,8 +2942,7 @@ matchForm.addEventListener(
 
 
         const {
-            error:
-                historyError
+            error: historyError
         } =
             await supabaseClient
                 .from("match_history")
@@ -2568,6 +2972,7 @@ matchForm.addEventListener(
             );
 
             return;
+
         }
 
 
@@ -2596,7 +3001,7 @@ matchForm.addEventListener(
 
 
         /* =================================================
-           NO MATCHES
+           NO MATCH
         ================================================= */
 
         if (
@@ -2609,28 +3014,42 @@ matchForm.addEventListener(
 
                     <div class="empty-icon">
 
-                        <i class="
-                            fa-solid
-                            fa-magnifying-glass
-                        "></i>
+                        <i
+                            class="
+                                fa-solid
+                                fa-magnifying-glass
+                            "
+                        ></i>
 
                     </div>
+
 
                     <h3>
                         No Donor Found
                     </h3>
 
+
                     <p>
-                        No donor has registered for
-                        ${escapeHtml(organ)} yet.
+
+                        No donor has registered
+                        for
+                        ${escapeHtml(organ)}
+                        yet.
+
                     </p>
 
-                    <p style="
-                        margin-top:10px;
-                        font-size:10px;
-                    ">
-                        Matching results are limited to records
-                        your account is allowed to access.
+
+                    <p
+                        style="
+                            margin-top:10px;
+                            font-size:10px;
+                        "
+                    >
+
+                        Matching results are limited
+                        to records your account is
+                        allowed to access.
+
                     </p>
 
                 </div>
@@ -2638,6 +3057,7 @@ matchForm.addEventListener(
             `;
 
             return;
+
         }
 
 
@@ -2647,11 +3067,18 @@ matchForm.addEventListener(
 
         matchResults.innerHTML = `
 
-            <h3 class="match-title">
+            <h3
+                class="match-title"
+            >
 
                 <i
-                    class="fa-solid fa-wand-magic-sparkles"
-                    style="color:#0b63f6;"
+                    class="
+                        fa-solid
+                        fa-wand-magic-sparkles
+                    "
+                    style="
+                        color:#0b63f6;
+                    "
                 ></i>
 
                 AI Match Results
@@ -2659,116 +3086,143 @@ matchForm.addEventListener(
             </h3>
 
 
-            <p style="
-                color:#64748b;
-                font-size:11px;
-                margin-bottom:18px;
-            ">
+            <p
+                style="
+                    color:#64748b;
+                    font-size:11px;
+                    margin-bottom:18px;
+                "
+            >
 
                 ${topMatches.length}
-                potential donor(s) found for
+
+                potential donor(s)
+                found for
 
                 <strong>
                     ${escapeHtml(organ)}
                 </strong>
 
-                / ${escapeHtml(blood)}
+                /
 
-                / ${escapeHtml(urgency)}
+                ${escapeHtml(blood)}
+
+                /
+
+                ${escapeHtml(urgency)}
 
             </p>
 
 
             ${
-                topMatches.map(
-                    (item, index) => `
 
-                <div class="match-item">
+                topMatches
+                    .map(
+                        item => `
 
-                    <div class="match-avatar">
+                            <div
+                                class="match-item"
+                            >
 
-                        ${
-                            escapeHtml(
-                                item.donor.name
-                                    .charAt(0)
-                                    .toUpperCase()
-                            )
-                        }
+                                <div
+                                    class="match-avatar"
+                                >
 
-                    </div>
+                                    ${escapeHtml(
+                                        item.donor.name
+                                            .charAt(0)
+                                            .toUpperCase()
+                                    )}
 
-
-                    <div class="match-info">
-
-                        <strong>
-                            ${escapeHtml(
-                                item.donor.name
-                            )}
-                        </strong>
-
-                        <span>
-                            ${escapeHtml(
-                                item.donor.organ
-                            )}
-
-                            •
-
-                            ${escapeHtml(
-                                item.donor.blood
-                            )}
-
-                            •
-
-                            ${escapeHtml(
-                                item.donor.city
-                            )}
-
-                        </span>
-
-                        <div class="match-reason">
-
-                            ${
-                                item.reasons.join(
-                                    " • "
-                                )
-                            }
-
-                        </div>
-
-                    </div>
+                                </div>
 
 
-                    <span class="match-score">
+                                <div
+                                    class="match-info"
+                                >
 
-                        ${item.score}%
+                                    <strong>
 
-                    </span>
+                                        ${escapeHtml(
+                                            item.donor.name
+                                        )}
 
-                </div>
+                                    </strong>
 
-            `
-                ).join("")
+
+                                    <span>
+
+                                        ${escapeHtml(
+                                            item.donor.organ
+                                        )}
+
+                                        •
+
+                                        ${escapeHtml(
+                                            item.donor.blood
+                                        )}
+
+                                        •
+
+                                        ${escapeHtml(
+                                            item.donor.city
+                                        )}
+
+                                    </span>
+
+
+                                    <div
+                                        class="match-reason"
+                                    >
+
+                                        ${item.reasons.join(
+                                            " • "
+                                        )}
+
+                                    </div>
+
+                                </div>
+
+
+                                <span
+                                    class="match-score"
+                                >
+
+                                    ${item.score}%
+
+                                </span>
+
+                            </div>
+
+                        `
+                    )
+                    .join("")
+
             }
 
 
-            <div style="
-                margin-top:18px;
-                padding:14px;
-                border-radius:12px;
-                background:#fff7ed;
-                border:1px solid #fed7aa;
-                color:#9a3412;
-                font-size:10px;
-            ">
+            <div
+                style="
+                    margin-top:18px;
+                    padding:14px;
+                    border-radius:12px;
+                    background:#fff7ed;
+                    border:1px solid #fed7aa;
+                    color:#9a3412;
+                    font-size:10px;
+                "
+            >
 
                 <strong>
                     Prototype Notice:
                 </strong>
 
+
                 This score is a demonstration
-                algorithm only. Real organ allocation
-                requires verified medical, legal and
-                clinical criteria.
+                algorithm only. Real organ
+                allocation requires verified
+                medical, legal and clinical
+                criteria.
 
             </div>
 
@@ -2875,21 +3329,26 @@ document
 
 
             const email =
-                document.getElementById(
-                    "loginEmail"
-                )
-                .value
-                .trim()
-                .toLowerCase();
+                document
+                    .getElementById(
+                        "loginEmail"
+                    )
+                    .value
+                    .trim()
+                    .toLowerCase();
 
 
             const password =
-                document.getElementById(
-                    "loginPassword"
-                ).value;
+                document
+                    .getElementById(
+                        "loginPassword"
+                    )
+                    .value;
 
 
-            if (!supabaseClient) {
+            if (
+                !supabaseClient
+            ) {
 
                 showToast(
                     "Supabase setup needed",
@@ -2897,6 +3356,7 @@ document
                 );
 
                 return;
+
             }
 
 
@@ -2908,9 +3368,12 @@ document
             ) {
 
                 const displayName =
-                    document.getElementById(
-                        "signupName"
-                    ).value.trim();
+                    document
+                        .getElementById(
+                            "signupName"
+                        )
+                        .value
+                        .trim();
 
 
                 result =
@@ -2923,10 +3386,14 @@ document
                             password,
 
                             options: {
+
                                 data: {
+
                                     display_name:
                                         displayName
+
                                 }
+
                             }
 
                         });
@@ -2939,8 +3406,11 @@ document
                     await supabaseClient
                         .auth
                         .signInWithPassword({
+
                             email,
+
                             password
+
                         });
 
             }
@@ -2951,14 +3421,17 @@ document
             ) {
 
                 showToast(
+
                     isSignUpMode
                         ? "Sign up failed"
                         : "Login failed",
 
                     result.error.message
+
                 );
 
                 return;
+
             }
 
 
@@ -2994,13 +3467,15 @@ document
 
 
                 showToast(
+
                     isSignUpMode
                         ? "Account created"
                         : "Login successful",
 
                     "Signed in as " +
-                        email +
-                        "."
+                    email +
+                    "."
+
                 );
 
             }
@@ -3013,7 +3488,7 @@ document
 
 
 /* =========================================================
-   AUTH MODE TOGGLE
+   LOGIN / SIGNUP MODE
 ========================================================= */
 
 document
@@ -3028,45 +3503,67 @@ document
                 !isSignUpMode;
 
 
-            document.getElementById(
-                "signupNameGroup"
-            ).hidden =
+            document
+                .getElementById(
+                    "signupNameGroup"
+                )
+                .hidden =
                 !isSignUpMode;
 
 
-            document.getElementById(
-                "signupName"
-            ).required =
+            document
+                .getElementById(
+                    "signupName"
+                )
+                .required =
                 isSignUpMode;
 
 
-            document.getElementById(
-                "loginTitle"
-            ).textContent =
+            document
+                .getElementById(
+                    "loginTitle"
+                )
+                .textContent =
+
                 isSignUpMode
+
                     ? "Create Account"
+
                     : "Welcome Back";
 
 
-            document.getElementById(
-                "loginDescription"
-            ).textContent =
+            document
+                .getElementById(
+                    "loginDescription"
+                )
+                .textContent =
+
                 isSignUpMode
+
                     ? "Create an account to register and manage your records."
+
                     : "Sign in to your LifeLink account.";
 
 
-            document.getElementById(
-                "authSubmitLabel"
-            ).textContent =
+            document
+                .getElementById(
+                    "authSubmitLabel"
+                )
+                .textContent =
+
                 isSignUpMode
+
                     ? "Create account"
+
                     : "Login";
 
 
             this.textContent =
+
                 isSignUpMode
+
                     ? "Already have an account? Sign in"
+
                     : "New to LifeLink? Create an account";
 
         }
@@ -3074,7 +3571,7 @@ document
 
 
 /* =========================================================
-   LOGOUT
+   LOGOUT BUTTON
 ========================================================= */
 
 document
@@ -3085,9 +3582,12 @@ document
         "click",
         async function() {
 
-            if (!supabaseClient) {
+            if (
+                !supabaseClient
+            ) {
 
                 return;
+
             }
 
 
@@ -3107,6 +3607,7 @@ document
                 );
 
                 return;
+
             }
 
 
@@ -3205,7 +3706,7 @@ document.getElementById(
 
 
 /* =========================================================
-   INITIALIZE
+   INITIALIZE APPLICATION
 ========================================================= */
 
 renderHospitals();
@@ -3222,8 +3723,11 @@ initializeSupabase();
 ========================================================= */
 
 console.log(
+
     "%cLifeLink Organ Donation Management System",
+
     "font-size:18px;font-weight:bold;color:#0b63f6;"
+
 );
 
 
