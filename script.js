@@ -277,14 +277,6 @@ const demoInventory = [
     },
 
     {
-        organ: "Kidney",
-        blood: "A+",
-        hospital: "Fortis Hospital",
-        status: "Available",
-        updated: "Today"
-    },
-
-    {
         organ: "Liver",
         blood: "A+",
         hospital: "Apollo Hospitals",
@@ -322,6 +314,38 @@ const demoInventory = [
         hospital: "Aster Hospitals",
         status: "Available",
         updated: "Today"
+    },
+
+    {
+        organ: "Bone Marrow",
+        blood: "O-",
+        hospital: "Fortis Hospital",
+        status: "Available",
+        updated: "Today"
+    },
+
+    {
+        organ: "Skin",
+        blood: "AB-",
+        hospital: "City Hospital",
+        status: "Available",
+        updated: "1 hr ago"
+    },
+
+    {
+        organ: "Eye",
+        blood: "A+",
+        hospital: "Apollo Hospitals",
+        status: "Available",
+        updated: "Today"
+    },
+
+    {
+        organ: "Heart Valve",
+        blood: "O-",
+        hospital: "Narayana Health",
+        status: "Available",
+        updated: "30 mins ago"
     }
 
 ];
@@ -1042,7 +1066,7 @@ function clearPrivateData() {
 
     donors = [];
     recipients = [];
-    inventory = [];
+    inventory = [...demoInventory];
     requests = [];
     matchHistory = [];
     currentAppRole = "member";
@@ -1993,8 +2017,12 @@ document.getElementById(
    INITIALIZE
 ========================================================= */
 
+();
 renderHospitals();
 populateHospitalSelect();
+
+inventory = [...demoInventory];
+
 renderData();
 initializeSupabase();
 
