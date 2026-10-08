@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LifeLink | Organ Donation Management System</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<header class="header">
+
+    <div class="container nav-container">
+
+        <a href="#home" class="logo">
+            <span class="logo-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </span>
+
+            <span>Life<span>Link</span></span>
+        </a>
+
+        <nav class="navbar" id="navbar">
+            <a href="#home">Home</a>
+            <a href="#hospitals">Hospitals</a>
+            <a href="#donor">Donors</a>
+            <a href="#recipient">Recipients</a>
+            <a href="#matching">AI Match</a>
+            <a href="#history">History</a>
+            <a href="#inventory">Inventory</a>
+            <a href="#loginModal" class="mobile-auth" id="mobileAuth">Login</a>
+        </nav>
+
+        <div class="nav-actions">
+
+            <button class="login-btn" id="openLogin">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                Login
+            </button>
+
+            <button class="menu-btn" id="menuBtn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<!-- =====================================================
+     HERO
+===================================================== -->
+
+<section class="hero" id="home">
+
+    <div class="container hero-content">
+
+        <div class="hero-text">
+
+            <div class="hero-badge">
+                <i class="fa-solid fa-shield-heart"></i>
+                Smart Organ Donation Platform
+            </div>
+
+            <h1>
+                One Decision.
+                <span>One Life.</span>
+                Infinite Hope.
+            </h1>
+
+            <p>
+                LifeLink connects donors, recipients and hospitals
+                through a centralized organ donation management
+                platform with intelligent matching technology.
+            </p>
+
+            <div class="hero-buttons">
+
+                <a href="#donor" class="btn btn-primary">
+                    <i class="fa-solid fa-hand-holding-heart"></i>
+                    Become a Donor
+                </a>
+
+                <a href="#matching" class="btn btn-outline">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    Try AI Match
+                </a>
+
+            </div>
+
+            <div class="hero-trust">
+
+                <div>
+                    <i class="fa-solid fa-circle-check"></i>
+                    Smart Matching
+                </div>
+
+                <div>
+                    <i class="fa-solid fa-circle-check"></i>
+                    Hospital Network
+                </div>
+
+                <div>
+                    <i class="fa-solid fa-circle-check"></i>
+                    Live Dashboard
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="hero-image-card">
+
+            <img
+                src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=85"
+                alt="Modern healthcare facility"
+            >
+
+            <div class="hero-floating-card">
+
+                <div class="floating-icon">
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+
+                <div>
+                    <strong>LifeLink AI</strong>
+                    <span>Matching Engine Active</span>
+                </div>
+
+                <div class="status-dot"></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     DASHBOARD STATS
+===================================================== -->
+
+<section class="stats-section">
+
+    <div class="container stats-grid">
+
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <i class="fa-solid fa-user-group"></i>
+            </div>
+
+            <div>
+                <span id="donorCount" class="stat-number">0</span>
+                <p>Registered Donors</p>
+            </div>
+        </div>
+
+
+        <div class="stat-card">
+            <div class="stat-icon red">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div>
+                <span id="recipientCount" class="stat-number">0</span>
+                <p>Recipients</p>
+            </div>
+        </div>
+
+
+        <div class="stat-card">
+            <div class="stat-icon green">
+                <i class="fa-solid fa-hospital"></i>
+            </div>
+
+            <div>
+                <span id="hospitalCount" class="stat-number">0</span>
+                <p>Partner Hospitals</p>
+            </div>
+        </div>
+
+
+        <div class="stat-card">
+            <div class="stat-icon purple">
+                <i class="fa-solid fa-box-heart"></i>
+            </div>
+
+            <div>
+                <span id="organCount" class="stat-number">0</span>
+                <p>Organs Available</p>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     ABOUT
+===================================================== -->
+
+<section class="section">
+
+    <div class="container about-grid">
+
+        <div class="about-image">
+
+            <img
+                src="https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=1000&q=85"
+                alt="Healthcare professionals"
+            >
+
+            <div class="experience-card">
+                <strong>24/7</strong>
+                <span>Connected Care</span>
+            </div>
+
+        </div>
+
+
+        <div class="about-content">
+
+            <span class="section-label">ABOUT LIFELINK</span>
+
+            <h2>
+                Technology that helps
+                <span>connect lives.</span>
+            </h2>
+
+            <p>
+                LifeLink is a hackathon prototype designed to
+                coordinate donors, recipients, hospitals and
+                organ inventory in one centralized platform.
+            </p>
+
+            <div class="feature-list">
+
+                <div class="feature-item">
+
+                    <i class="fa-solid fa-brain"></i>
+
+                    <div>
+                        <h3>AI-Assisted Matching</h3>
+
+                        <p>
+                            Demonstrates intelligent donor matching
+                            using organ, blood group and urgency.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="feature-item">
+
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+
+                    <div>
+                        <h3>Complete History</h3>
+
+                        <p>
+                            Track donor registrations, recipient
+                            requests and organ availability.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="feature-item">
+
+                    <i class="fa-solid fa-hospital"></i>
+
+                    <div>
+                        <h3>Hospital Network</h3>
+
+                        <p>
+                            View connected hospitals and their
+                            available organ inventory.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     HOSPITALS
+===================================================== -->
+
+<section class="section hospitals-section" id="hospitals">
+
+    <div class="container">
+
+        <div class="section-heading">
+
+            <div>
+                <span class="section-label">NETWORK</span>
+
+                <h2>
+                    Partner
+                    <span>Hospitals</span>
+                </h2>
+
+                <p>
+                    Healthcare institutions connected to the
+                    LifeLink demonstration network.
+                </p>
+            </div>
+
+
+            <div class="hospital-search">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    type="text"
+                    id="hospitalSearch"
+                    placeholder="Search hospitals..."
+                >
+
+            </div>
+
+        </div>
+
+
+        <div id="hospitalGrid" class="hospital-grid"></div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     DONOR REGISTRATION
+===================================================== -->
+
+<section class="section" id="donor">
+
+    <div class="container form-layout">
+
+        <div class="form-info">
+
+            <span class="section-label">
+                DONOR REGISTRATION
+            </span>
+
+            <h2>
+                Become a
+                <span>LifeLink Donor</span>
+            </h2>
+
+            <p>
+                Register your willingness to donate and become
+                part of the LifeLink donor network.
+            </p>
+
+            <div class="info-card">
+
+                <i class="fa-solid fa-heart-circle-check"></i>
+
+                <div>
+                    <strong>Every donor matters.</strong>
+
+                    <p>
+                        Your registration is linked to your account
+                        and protected by database access policies.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <form class="form-card" id="donorForm">
+
+            <h3>
+                <i class="fa-solid fa-user-plus"></i>
+                Donor Details
+            </h3>
+
+
+            <div class="form-grid">
+
+                <div class="input-group">
+                    <label>Full Name</label>
+
+                    <input
+                        type="text"
+                        id="donorName"
+                        placeholder="Enter full name"
+                        required
+                    >
+                </div>
+
+
+                <div class="input-group">
+                    <label>Age</label>
+
+                    <input
+                        type="number"
+                        id="donorAge"
+                        min="18"
+                        placeholder="Age"
+                        required
+                    >
+                </div>
+
+
+                <div class="input-group">
+                    <label>Blood Group</label>
+
+                    <select id="donorBlood" required>
+                        <option value="">Select blood group</option>
+                        <option>A+</option>
+                        <option>A-</option>
+                        <option>B+</option>
+                        <option>B-</option>
+                        <option>AB+</option>
+                        <option>AB-</option>
+                        <option>O+</option>
+                        <option>O-</option>
+                    </select>
+                </div>
+
+
+                <div class="input-group">
+                    <label>Organ</label>
+
+                    <select id="donorOrgan" required>
+                        <option value="">Select organ</option>
+                        <option>Kidney</option>
+                        <option>Liver</option>
+                        <option>Heart</option>
+                        <option>Lungs</option>
+                        <option>Pancreas</option>
+                        <option>Cornea</option>
+                    </select>
+                </div>
+
+
+                <div class="input-group">
+                    <label>City</label>
+
+                    <input
+                        type="text"
+                        id="donorCity"
+                        placeholder="City"
+                        required
+                    >
+                </div>
+
+
+                <div class="input-group">
+                    <label>Phone</label>
+
+                    <input
+                        type="tel"
+                        id="donorPhone"
+                        placeholder="Phone number"
+                        required
+                    >
+                </div>
+
+            </div>
+
+
+            <label class="checkbox">
+
+                <input
+                    type="checkbox"
+                    id="donorConsent"
+                    required
+                >
+
+                <span>
+                    I understand this is a hackathon prototype
+                    and consent to submit this demo information.
+                </span>
+
+            </label>
+
+
+            <button class="btn btn-primary full-btn" type="submit">
+
+                <i class="fa-solid fa-heart"></i>
+
+                Register Donor
+
+            </button>
+
+        </form>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     RECIPIENT REGISTRATION
+===================================================== -->
+
+<section class="section recipient-section" id="recipient">
+
+    <div class="container form-layout reverse">
+
+        <div class="form-info">
+
+            <span class="section-label">
+                RECIPIENT REGISTRATION
+            </span>
+
+            <h2>
+                Request an
+                <span>Organ Match</span>
+            </h2>
+
+            <p>
+                Register an organ request and monitor its
+                status through the LifeLink dashboard.
+            </p>
+
+            <div class="urgency-box">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                <div>
+                    <strong>Priority Tracking</strong>
+
+                    <p>
+                        Requests can be categorized as Low,
+                        Medium, High or Critical.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <form class="form-card" id="recipientForm">
+
+            <h3>
+                <i class="fa-solid fa-hospital-user"></i>
+                Recipient Details
+            </h3>
+
+
+            <div class="form-grid">
+
+                <div class="input-group">
+                    <label>Full Name</label>
+
+                    <input
+                        type="text"
+                        id="recipientName"
+                        placeholder="Enter full name"
+                        required
+                    >
+                </div>
+
+
+                <div class="input-group">
+                    <label>Age</label>
+
+                    <input
+                        type="number"
+                        id="recipientAge"
+                        placeholder="Age"
+                        required
+                    >
+                </div>
+
+
+                <div class="input-group">
+                    <label>Blood Group</label>
+
+                    <select id="recipientBlood" required>
+                        <option value="">Select blood group</option>
+                        <option>A+</option>
+                        <option>A-</option>
+                        <option>B+</option>
+                        <option>B-</option>
+                        <option>AB+</option>
+                        <option>AB-</option>
+                        <option>O+</option>
+                        <option>O-</option>
+                    </select>
+                </div>
+
+
+                <div class="input-group">
+                    <label>Required Organ</label>
+
+                    <select id="recipientOrgan" required>
+                        <option value="">Select organ</option>
+                        <option>Kidney</option>
+                        <option>Liver</option>
+                        <option>Heart</option>
+                        <option>Lungs</option>
+                        <option>Pancreas</option>
+                        <option>Cornea</option>
+                    </select>
+                </div>
+
+
+                <div class="input-group">
+                    <label>Urgency</label>
+
+                    <select id="recipientUrgency" required>
+                        <option value="">Select urgency</option>
+                        <option>Low</option>
+                        <option>Medium</option>
+                        <option>High</option>
+                        <option>Critical</option>
+                    </select>
+                </div>
+
+
+                <div class="input-group">
+                    <label>Hospital</label>
+
+                    <select id="recipientHospital" required>
+                        <option value="">Select hospital</option>
+                    </select>
+                </div>
+
+
+                <div class="input-group full">
+                    <label>Contact Number</label>
+
+                    <input
+                        type="tel"
+                        id="recipientPhone"
+                        placeholder="Contact number"
+                        required
+                    >
+                </div>
+
+            </div>
+
+
+            <button class="btn btn-primary full-btn" type="submit">
+
+                <i class="fa-solid fa-paper-plane"></i>
+
+                Submit Organ Request
+
+            </button>
+
+        </form>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     AI MATCHING
+===================================================== -->
+
+<section class="section matching-section" id="matching">
+
+    <div class="container">
+
+        <div class="section-heading center">
+
+            <div>
+
+                <span class="section-label">
+                    ARTIFICIAL INTELLIGENCE
+                </span>
+
+                <h2>
+                    AI-Powered
+                    <span>Organ Matching</span>
+                </h2>
+
+                <p>
+                    Sign in to search donor records your account is permitted to access.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="matching-layout">
+
+            <form class="match-card" id="matchForm">
+
+                <div class="match-header">
+
+                    <div class="match-ai-icon">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+
+                    <div>
+                        <h3>AI Match Engine</h3>
+                        <p>Prototype matching score</p>
+                    </div>
+
+                </div>
+
+
+                <div class="demo-hint">
+
+                    <i class="fa-solid fa-lightbulb"></i>
+
+                    <div>
+                        <strong>Authorized records only</strong>
+
+                        <p>
+                            Sign in to search permitted records
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>Required Organ</label>
+
+                    <select id="matchOrgan" required>
+                        <option value="">Select organ</option>
+                        <option>Kidney</option>
+                        <option>Liver</option>
+                        <option>Heart</option>
+                        <option>Lungs</option>
+                        <option>Pancreas</option>
+                        <option>Cornea</option>
+                    </select>
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>Recipient Blood Group</label>
+
+                    <select id="matchBlood" required>
+                        <option value="">Select blood group</option>
+                        <option>A+</option>
+                        <option>A-</option>
+                        <option>B+</option>
+                        <option>B-</option>
+                        <option>AB+</option>
+                        <option>AB-</option>
+                        <option>O+</option>
+                        <option>O-</option>
+                    </select>
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label>Urgency</label>
+
+                    <select id="matchUrgency">
+
+                        <option>Low</option>
+                        <option>Medium</option>
+                        <option>High</option>
+                        <option selected>Critical</option>
+
+                    </select>
+
+                </div>
+
+
+                <button class="btn btn-primary full-btn" type="submit">
+
+                    <i class="fa-solid fa-brain"></i>
+
+                    Run AI Matching
+
+                </button>
+
+            </form>
+
+
+            <div class="match-results" id="matchResults">
+
+                <div class="empty-match">
+
+                    <div class="empty-icon">
+                        <i class="fa-solid fa-dna"></i>
+                    </div>
+
+                    <h3>AI Engine Ready</h3>
+
+                    <p>
+                        Select the demo values and run the AI
+                        matching engine.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     HISTORY / SUMMARIES
+===================================================== -->
+
+<section class="section history-section" id="history">
+
+    <div class="container">
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="section-label">
+                    MANAGEMENT HISTORY
+                </span>
+
+                <h2>
+                    Registration
+                    <span>History</span>
+                </h2>
+
+                <p>
+                    Summary of donors, recipients and organ
+                    availability in the LifeLink system.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="history-summary-grid">
+
+            <div class="history-summary-card">
+
+                <div class="summary-top">
+
+                    <div class="summary-icon blue">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+
+                    <span>DONORS</span>
+
+                </div>
+
+                <strong id="historyDonorTotal">0</strong>
+
+                <p>
+                    Registered donor profiles
+                </p>
+
+            </div>
+
+
+            <div class="history-summary-card">
+
+                <div class="summary-top">
+
+                    <div class="summary-icon red">
+                        <i class="fa-solid fa-hospital-user"></i>
+                    </div>
+
+                    <span>RECIPIENTS</span>
+
+                </div>
+
+                <strong id="historyRecipientTotal">0</strong>
+
+                <p>
+                    Organ requests registered
+                </p>
+
+            </div>
+
+
+            <div class="history-summary-card">
+
+                <div class="summary-top">
+
+                    <div class="summary-icon green">
+                        <i class="fa-solid fa-box-heart"></i>
+                    </div>
+
+                    <span>ORGANS</span>
+
+                </div>
+
+                <strong id="historyOrganTotal">0</strong>
+
+                <p>
+                    Organs currently available
+                </p>
+
+            </div>
+
+
+            <div class="history-summary-card">
+
+                <div class="summary-top">
+
+                    <div class="summary-icon purple">
+                        <i class="fa-solid fa-link"></i>
+                    </div>
+
+                    <span>MATCHES</span>
+
+                </div>
+
+                <strong id="historyMatchTotal">0</strong>
+
+                <p>
+                    AI matching demonstrations
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- DONOR HISTORY -->
+
+        <div class="history-block">
+
+            <div class="history-block-header">
+
+                <div>
+                    <h3>
+                        <i class="fa-solid fa-users"></i>
+                        Registered Donor History
+                    </h3>
+
+                    <p>
+                        Recent donor registrations
+                    </p>
+                </div>
+
+                <span class="history-count" id="donorHistoryCount">
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Donor</th>
+                            <th>Age</th>
+                            <th>Blood</th>
+                            <th>Organ</th>
+                            <th>City</th>
+                            <th>Registered</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="donorHistoryBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- RECIPIENT HISTORY -->
+
+        <div class="history-block">
+
+            <div class="history-block-header">
+
+                <div>
+                    <h3>
+                        <i class="fa-solid fa-file-medical"></i>
+                        Recipient Request History
+                    </h3>
+
+                    <p>
+                        Recent recipient organ requests
+                    </p>
+                </div>
+
+                <span class="history-count" id="recipientHistoryCount">
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Recipient</th>
+                            <th>Organ</th>
+                            <th>Blood</th>
+                            <th>Hospital</th>
+                            <th>Urgency</th>
+                            <th>Status</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="recipientHistoryBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- ORGAN HISTORY -->
+
+        <div class="history-block">
+
+            <div class="history-block-header">
+
+                <div>
+                    <h3>
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                        Organ Availability History
+                    </h3>
+
+                    <p>
+                        Current organ inventory across hospitals
+                    </p>
+                </div>
+
+                <span class="history-count" id="organHistoryCount">
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Organ</th>
+                            <th>Blood</th>
+                            <th>Hospital</th>
+                            <th>Status</th>
+                            <th>Updated</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="organHistoryBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     INVENTORY
+===================================================== -->
+
+<section class="section inventory-section" id="inventory">
+
+    <div class="container">
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="section-label">
+                    ORGAN INVENTORY
+                </span>
+
+                <h2>
+                    Available
+                    <span>Organs</span>
+                </h2>
+
+                <p>
+                    Current inventory available in the
+                    LifeLink demonstration system.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>Organ</th>
+                        <th>Blood Group</th>
+                        <th>Hospital</th>
+                        <th>Status</th>
+                        <th>Updated</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="inventoryBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     REQUESTS
+===================================================== -->
+
+<section class="section requests-section">
+
+    <div class="container">
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="section-label">
+                    REQUEST MANAGEMENT
+                </span>
+
+                <h2>
+                    Organ
+                    <span>Requests</span>
+                </h2>
+
+                <p>
+                    Current recipient requests and priority levels.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>Recipient</th>
+                        <th>Organ</th>
+                        <th>Blood</th>
+                        <th>Hospital</th>
+                        <th>Urgency</th>
+                        <th>Status</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="requestsBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     ADMIN DASHBOARD
+===================================================== -->
+
+<section class="section admin-section" id="adminPanel">
+
+    <div class="container">
+
+        <div class="admin-header">
+
+            <div>
+
+                <span class="section-label">
+                    ADMIN CONSOLE
+                </span>
+
+                <h2>
+                    LifeLink
+                    <span>Dashboard</span>
+                </h2>
+
+            </div>
+
+
+            <button class="btn btn-danger" id="logoutBtn">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+
+                Logout
+
+            </button>
+
+        </div>
+
+
+        <div class="admin-grid">
+
+            <div class="admin-card">
+
+                <i class="fa-solid fa-users"></i>
+
+                <span id="adminDonors">0</span>
+
+                <p>Total Donors</p>
+
+            </div>
+
+
+            <div class="admin-card">
+
+                <i class="fa-solid fa-heart"></i>
+
+                <span id="adminRecipients">0</span>
+
+                <p>Total Requests</p>
+
+            </div>
+
+
+            <div class="admin-card">
+
+                <i class="fa-solid fa-hospital"></i>
+
+                <span id="adminHospitals">0</span>
+
+                <p>Hospitals</p>
+
+            </div>
+
+
+            <div class="admin-card">
+
+                <i class="fa-solid fa-box-open"></i>
+
+                <span id="adminOrgans">0</span>
+
+                <p>Organs Available</p>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-info">
+
+            <h3>
+                <i class="fa-solid fa-circle-info"></i>
+                Prototype Admin Dashboard
+            </h3>
+
+            <p>
+                This dashboard is designed for hackathon
+                demonstration purposes. Real-world deployment
+                would require secure authentication, encrypted
+                storage, verified hospital systems and clinical
+                validation.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
+
+<footer class="footer">
+
+    <div class="container footer-grid">
+
+        <div>
+
+            <a href="#home" class="logo footer-logo">
+
+                <span class="logo-icon">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                </span>
+
+                <span>Life<span>Link</span></span>
+
+            </a>
+
+            <p>
+                Connecting people, hospitals and technology
+                to create a smarter organ donation ecosystem.
+            </p>
+
+        </div>
+
+
+        <div>
+
+            <h4>Platform</h4>
+
+            <a href="#donor">Donor Registration</a>
+            <a href="#recipient">Recipient Requests</a>
+            <a href="#matching">AI Matching</a>
+            <a href="#history">History</a>
+
+        </div>
+
+
+        <div>
+
+            <h4>Network</h4>
+
+            <a href="#hospitals">Hospitals</a>
+            <a href="#inventory">Organ Inventory</a>
+            <a href="#adminPanel">Admin Dashboard</a>
+
+        </div>
+
+
+        <div>
+
+            <h4>Hackathon</h4>
+
+            <p>
+                LifeLink is a prototype and is not intended
+                for real clinical or medical decision making.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer-bottom">
+
+        <p>
+            © <span id="currentYear"></span>
+            LifeLink — Hackathon Prototype
+        </p>
+
+        <p>
+            Built with
+            <i class="fa-solid fa-heart"></i>
+            for saving lives.
+        </p>
+
+    </div>
+
+</footer>
+
+
+<!-- =====================================================
+     LOGIN MODAL
+===================================================== -->
+
+<div class="modal-overlay" id="loginModal">
+
+    <div class="login-modal">
+
+        <button class="modal-close" id="closeLogin">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+
+        <div class="login-icon">
+            <i class="fa-solid fa-lock"></i>
+        </div>
+
+
+        <h2 id="loginTitle">Welcome Back</h2>
+
+        <p id="loginDescription">Sign in to your LifeLink account.</p>
+
+
+        <form id="loginForm">
+
+            <div class="input-group" id="signupNameGroup" hidden>
+                <label for="signupName">Full Name</label>
+                <input
+                    type="text"
+                    id="signupName"
+                    placeholder="Enter your name"
+                    autocomplete="name"
+                >
+            </div>
+
+            <div class="input-group">
+
+                <label>Email</label>
+
+                <input
+                    type="email"
+                    id="loginEmail"
+                    placeholder="Enter email"
+                    required
+                >
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label>Password</label>
+
+                <input
+                    type="password"
+                    id="loginPassword"
+                    placeholder="Enter password"
+                    required
+                >
+
+            </div>
+
+
+            <button class="btn btn-primary full-btn" id="authSubmit" type="submit">
+
+                <i class="fa-solid fa-right-to-bracket"></i>
+
+                <span id="authSubmitLabel">Login</span>
+
+            </button>
+
+        </form>
+
+        <button class="auth-mode-toggle" id="authModeToggle" type="button">
+            New to LifeLink? Create an account
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     TOAST
+===================================================== -->
+
+<div class="toast" id="toast">
+
+    <div class="toast-icon">
+        <i class="fa-solid fa-check"></i>
+    </div>
+
+    <div>
+
+        <strong id="toastTitle">
+            Success
+        </strong>
+
+        <p id="toastMessage">
+            Action completed.
+        </p>
+
+    </div>
+
+    <button id="closeToast">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
