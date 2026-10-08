@@ -346,6 +346,86 @@ const demoInventory = [
         hospital: "Narayana Health",
         status: "Available",
         updated: "30 mins ago"
+    },
+
+    {
+        organ: "Kidney",
+        blood: "B+",
+        hospital: "Manipal Hospitals",
+        status: "Available",
+        updated: "Today"
+    },
+
+    {
+        organ: "Liver",
+        blood: "O-",
+        hospital: "Fortis Hospital",
+        status: "Available",
+        updated: "45 mins ago"
+    },
+
+    {
+        organ: "Heart",
+        blood: "AB+",
+        hospital: "KIMS Hospitals",
+        status: "Available",
+        updated: "Today"
+    },
+
+    {
+        organ: "Lungs",
+        blood: "A-",
+        hospital: "Aster Hospitals",
+        status: "Available",
+        updated: "1 hr ago"
+    },
+
+    {
+        organ: "Pancreas",
+        blood: "B-",
+        hospital: "City Hospital",
+        status: "Available",
+        updated: "2 hrs ago"
+    },
+
+    {
+        organ: "Cornea",
+        blood: "O+",
+        hospital: "Apollo Hospitals",
+        status: "Available",
+        updated: "Today"
+    },
+
+    {
+        organ: "Small Intestine",
+        blood: "AB-",
+        hospital: "Narayana Health",
+        status: "Available",
+        updated: "3 hrs ago"
+    },
+
+    {
+        organ: "Bone Marrow",
+        blood: "A+",
+        hospital: "Rainbow Children's Hospital",
+        status: "Available",
+        updated: "Today"
+    },
+
+    {
+        organ: "Skin",
+        blood: "B+",
+        hospital: "Fortis Hospital",
+        status: "Available",
+        updated: "4 hrs ago"
+    },
+
+    {
+        organ: "Heart Valve",
+        blood: "O+",
+        hospital: "Aster Hospitals",
+        status: "Available",
+        updated: "2 hrs ago"
     }
 
 ];
@@ -1143,14 +1223,17 @@ async function loadApplicationData() {
     currentAppRole = profileResult.data?.role || "member";
     donors = donorResult.data.map(mapDonor);
     recipients = recipientResult.data.map(mapRecipient);
-    inventory = inventoryResult.data.map(row => ({
-        id: row.id,
-        organ: row.organ,
-        blood: row.blood_group,
-        hospital: row.hospital_name,
-        status: row.status,
-        updated: new Date(row.updated_at).toLocaleString()
-    }));
+    inventory = [
+        ...demoInventory,
+        ...inventoryResult.data.map(row => ({
+            id: row.id,
+            organ: row.organ,
+            blood: row.blood_group,
+            hospital: row.hospital_name,
+            status: row.status,
+            updated: new Date(row.updated_at).toLocaleString()
+        }))
+    ];
     matchHistory = matchResult.data.map(row => ({
         id: row.id,
         organ: row.organ,
@@ -2017,7 +2100,6 @@ document.getElementById(
    INITIALIZE
 ========================================================= */
 
-();
 renderHospitals();
 populateHospitalSelect();
 
