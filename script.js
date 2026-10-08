@@ -1,4 +1,4 @@
-/* ========================================================
+/* =========================================================
    LIFELINK
    ORGAN DONATION MANAGEMENT SYSTEM
 
@@ -277,155 +277,51 @@ const demoInventory = [
     },
 
     {
-        organ: "Liver",
-        blood: "A+",
-        hospital: "Apollo Hospitals",
-        status: "Available",
-        updated: "2 hrs ago"
-    },
-
-    {
-        organ: "Heart",
-        blood: "B+",
-        hospital: "Narayana Health",
-        status: "Available",
-        updated: "1 hr ago"
-    },
-
-    {
-        organ: "Lungs",
-        blood: "B-",
-        hospital: "Manipal Hospitals",
-        status: "Available",
-        updated: "3 hrs ago"
-    },
-
-    {
-        organ: "Cornea",
-        blood: "AB+",
-        hospital: "Rainbow Children's Hospital",
-        status: "Available",
-        updated: "4 hrs ago"
-    },
-
-    {
-        organ: "Pancreas",
-        blood: "O+",
-        hospital: "Aster Hospitals",
-        status: "Available",
-        updated: "Today"
-    },
-
-    {
-        organ: "Bone Marrow",
-        blood: "O-",
-        hospital: "Fortis Hospital",
-        status: "Available",
-        updated: "Today"
-    },
-
-    {
-        organ: "Skin",
-        blood: "AB-",
-        hospital: "City Hospital",
-        status: "Available",
-        updated: "1 hr ago"
-    },
-
-    {
-        organ: "Eye",
-        blood: "A+",
-        hospital: "Apollo Hospitals",
-        status: "Available",
-        updated: "Today"
-    },
-
-    {
-        organ: "Heart Valve",
-        blood: "O-",
-        hospital: "Narayana Health",
-        status: "Available",
-        updated: "30 mins ago"
-    },
-
-    {
         organ: "Kidney",
-        blood: "B+",
-        hospital: "Manipal Hospitals",
+        blood: "A+",
+        hospital: "Fortis Hospital",
         status: "Available",
         updated: "Today"
     },
 
     {
         organ: "Liver",
-        blood: "O-",
-        hospital: "Fortis Hospital",
+        blood: "A+",
+        hospital: "Apollo Hospitals",
         status: "Available",
-        updated: "45 mins ago"
+        updated: "2 hrs ago"
     },
 
     {
         organ: "Heart",
-        blood: "AB+",
-        hospital: "KIMS Hospitals",
-        status: "Available",
-        updated: "Today"
-    },
-
-    {
-        organ: "Lungs",
-        blood: "A-",
-        hospital: "Aster Hospitals",
+        blood: "B+",
+        hospital: "Narayana Health",
         status: "Available",
         updated: "1 hr ago"
     },
 
     {
-        organ: "Pancreas",
+        organ: "Lungs",
         blood: "B-",
-        hospital: "City Hospital",
-        status: "Available",
-        updated: "2 hrs ago"
-    },
-
-    {
-        organ: "Cornea",
-        blood: "O+",
-        hospital: "Apollo Hospitals",
-        status: "Available",
-        updated: "Today"
-    },
-
-    {
-        organ: "Small Intestine",
-        blood: "AB-",
-        hospital: "Narayana Health",
+        hospital: "Manipal Hospitals",
         status: "Available",
         updated: "3 hrs ago"
     },
 
     {
-        organ: "Bone Marrow",
-        blood: "A+",
+        organ: "Cornea",
+        blood: "AB+",
         hospital: "Rainbow Children's Hospital",
-        status: "Available",
-        updated: "Today"
-    },
-
-    {
-        organ: "Skin",
-        blood: "B+",
-        hospital: "Fortis Hospital",
         status: "Available",
         updated: "4 hrs ago"
     },
 
     {
-        organ: "Heart Valve",
+        organ: "Pancreas",
         blood: "O+",
         hospital: "Aster Hospitals",
         status: "Available",
-        updated: "2 hrs ago"
+        updated: "Today"
     }
 
 ];
@@ -437,7 +333,24 @@ const demoInventory = [
 
 let donors = [];
 let recipients = [];
-let inventory = [];
+
+/*
+   FIX:
+   Start with the dummy organ inventory so the
+   Available Organs section is never empty.
+*/
+let inventory = demoInventory.map((item, index) => ({
+    id: `demo-${index + 1}`,
+    organ: item.organ,
+    blood: item.blood,
+    hospital: item.hospital,
+    status: item.status,
+    updated: item.updated,
+    ownerId: null,
+    demo: true
+}));
+
+let inventoryHistory = [];
 let requests = [];
 let matchHistory = [];
 let supabaseClient = null;
@@ -480,6 +393,10 @@ const matchResults =
 
 const inventoryBody =
     document.getElementById("inventoryBody");
+
+
+const inventoryForm =
+    document.getElementById("inventoryForm");
 
 
 const requestsBody =
@@ -642,7 +559,10 @@ function escapeHtml(value) {
         "'": "&#39;"
     };
 
-    return String(value ?? "").replace(/[&<>"']/g, character => entities[character]);
+    return String(value ?? "").replace(
+        /[&<>"']/g,
+        character => entities[character]
+    );
 
 }
 
@@ -681,12 +601,26 @@ function populateHospitalSelect() {
 
 function renderInventory() {
 
+    const isStaff = Boolean(
+        currentUser &&
+        ["hospital", "admin"].includes(currentAppRole)
+    );
+
+    inventoryForm.hidden = !isStaff;
+
+
     if (!inventory.length) {
+
+        const emptyMessage = !currentUser
+            ? "No organ availability is currently listed."
+            : isStaff
+                ? "No availability has been added yet. Use the form above to report organs."
+                : "No hospital has reported organ availability yet.";
 
         inventoryBody.innerHTML = `
             <tr>
                 <td colspan="5" class="empty-table">
-                    No organs available.
+                    ${escapeHtml(emptyMessage)}
                 </td>
             </tr>
         `;
@@ -696,7 +630,28 @@ function renderInventory() {
 
 
     inventoryBody.innerHTML =
-        inventory.map(item => `
+        inventory.map(item => {
+
+            const statusClass =
+                item.status === "Available"
+                    ? "available"
+                    : item.status === "Transplanted"
+                        ? "critical"
+                        : item.status === "Reserved"
+                            ? "high"
+                            : "pending";
+
+
+            /*
+               Demo records have ownerId = null,
+               therefore they cannot be edited by staff.
+            */
+            const canUpdate =
+                isStaff &&
+                item.ownerId === currentUser.id;
+
+
+            return `
 
             <tr>
 
@@ -716,7 +671,7 @@ function renderInventory() {
 
                 <td>
 
-                    <span class="status available">
+                    <span class="status ${statusClass}">
                         ${escapeHtml(item.status)}
                     </span>
 
@@ -726,9 +681,58 @@ function renderInventory() {
                     ${escapeHtml(item.updated)}
                 </td>
 
+                ${
+                    canUpdate
+                        ? `
+                    <td>
+                        <div class="inventory-row-controls">
+
+                            <select
+                                aria-label="Availability for ${escapeHtml(item.organ)}"
+                                data-inventory-status
+                            >
+
+                                ${
+                                    [
+                                        "Available",
+                                        "Reserved",
+                                        "Transplanted",
+                                        "Unavailable"
+                                    ]
+                                    .map(status => `
+                                        <option
+                                            ${
+                                                item.status === status
+                                                    ? "selected"
+                                                    : ""
+                                            }
+                                        >
+                                            ${status}
+                                        </option>
+                                    `)
+                                    .join("")
+                                }
+
+                            </select>
+
+                            <button
+                                type="button"
+                                data-inventory-save="${escapeHtml(item.id)}"
+                            >
+                                Save
+                            </button>
+
+                        </div>
+                    </td>
+                    `
+                        : ""
+                }
+
             </tr>
 
-        `).join("");
+        `;
+
+        }).join("");
 }
 
 
@@ -942,7 +946,9 @@ function renderRecipientHistory() {
                 <td>
 
                     <span class="status pending">
-                        ${escapeHtml(recipient.status || "Pending")}
+                        ${escapeHtml(
+                            recipient.status || "Pending"
+                        )}
                     </span>
 
                 </td>
@@ -961,11 +967,25 @@ function renderOrganHistory() {
 
     document.getElementById(
         "organHistoryCount"
-    ).textContent = inventory.length;
+    ).textContent = inventoryHistory.length;
+
+
+    if (!inventoryHistory.length) {
+
+        organHistoryBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="empty-table">
+                    No availability changes have been recorded yet.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
 
 
     organHistoryBody.innerHTML =
-        inventory.map(item => `
+        inventoryHistory.map(item => `
 
             <tr>
 
@@ -985,10 +1005,34 @@ function renderOrganHistory() {
 
                 <td>
 
-                    <span class="status available">
-                        ${escapeHtml(item.status)}
+                    <span class="status ${
+                        item.action === "Removed"
+                            ? "critical"
+                            : item.action === "Added"
+                                ? "available"
+                                : "pending"
+                    }">
+
+                        ${escapeHtml(item.action)}
+
                     </span>
 
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        item.previousStatus || "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        item.status || "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(item.updatedBy)}
                 </td>
 
                 <td>
@@ -1125,214 +1169,734 @@ function renderData() {
 
 function renderAuthState() {
 
-    const openLogin = document.getElementById("openLogin");
-    const isStaff = ["hospital", "admin"].includes(currentAppRole);
+    const openLogin =
+        document.getElementById("openLogin");
+
+    const isStaff =
+        ["hospital", "admin"].includes(
+            currentAppRole
+        );
+
 
     openLogin.innerHTML = currentUser
         ? '<i class="fa-solid fa-right-from-bracket"></i> Sign out'
         : '<i class="fa-solid fa-right-to-bracket"></i> Login';
-    document.getElementById("mobileAuth").textContent = currentUser ? "Sign out" : "Login";
 
-    adminPanel.classList.toggle("active", Boolean(currentUser && isStaff));
 
-    if (currentUser && isStaff) {
+    document.getElementById(
+        "mobileAuth"
+    ).textContent =
+        currentUser
+            ? "Sign out"
+            : "Login";
+
+
+    adminPanel.classList.toggle(
+        "active",
+        Boolean(
+            currentUser &&
+            isStaff
+        )
+    );
+
+
+    if (
+        currentUser &&
+        isStaff
+    ) {
         updateAdminStats();
     }
 
 }
 
 
+/* =========================================================
+   CLEAR PRIVATE DATA
+========================================================= */
+
 function clearPrivateData() {
 
     donors = [];
     recipients = [];
-    inventory = [...demoInventory];
+
+    /*
+       FIX:
+       Do not remove the demo organ inventory
+       when the user signs out.
+    */
+    inventory = demoInventory.map(
+        (item, index) => ({
+            id: `demo-${index + 1}`,
+            organ: item.organ,
+            blood: item.blood,
+            hospital: item.hospital,
+            status: item.status,
+            updated: item.updated,
+            ownerId: null,
+            demo: true
+        })
+    );
+
+    inventoryHistory = [];
     requests = [];
     matchHistory = [];
+
     currentAppRole = "member";
+
     renderAuthState();
     renderData();
 
 }
 
+
+/* =========================================================
+   MAP DONOR
+========================================================= */
 
 function mapDonor(row) {
 
     return {
+
         id: row.id,
+
         name: row.name,
+
         age: row.age,
+
         blood: row.blood_group,
+
         organ: row.organ,
+
         city: row.city,
+
         phone: row.phone,
-        registeredAt: new Date(row.created_at).toLocaleDateString(),
+
+        registeredAt:
+            new Date(
+                row.created_at
+            ).toLocaleDateString(),
+
         type: "Registered"
+
     };
 
 }
 
+
+/* =========================================================
+   MAP RECIPIENT
+========================================================= */
 
 function mapRecipient(row) {
 
     return {
+
         id: row.id,
+
         name: row.name,
+
         age: row.age,
+
         blood: row.blood_group,
+
         organ: row.organ,
+
         urgency: row.urgency,
+
         hospital: row.hospital,
+
         phone: row.phone,
-        registeredAt: new Date(row.created_at).toLocaleDateString(),
+
+        registeredAt:
+            new Date(
+                row.created_at
+            ).toLocaleDateString(),
+
         status: row.status
+
     };
 
 }
 
 
+/* =========================================================
+   LOAD APPLICATION DATA
+========================================================= */
+
 async function loadApplicationData() {
 
-    if (!supabaseClient || !currentUser) {
+    if (
+        !supabaseClient ||
+        !currentUser
+    ) {
+
         clearPrivateData();
+
         return;
     }
 
-    const loadingUserId = currentUser.id;
-    const [profileResult, donorResult, recipientResult, inventoryResult, matchResult] =
+
+    const loadingUserId =
+        currentUser.id;
+
+
+    const [
+        profileResult,
+        donorResult,
+        recipientResult,
+        inventoryResult,
+        matchResult,
+        inventoryHistoryResult
+    ] =
         await Promise.all([
-            supabaseClient.from("profiles").select("role").eq("id", currentUser.id).maybeSingle(),
-            supabaseClient.from("donors").select("*").order("created_at", { ascending: false }),
-            supabaseClient.from("recipients").select("*").order("created_at", { ascending: false }),
-            supabaseClient.from("inventory").select("*").order("created_at", { ascending: false }),
-            supabaseClient.from("match_history").select("*").order("created_at", { ascending: false })
+
+            supabaseClient
+                .from("profiles")
+                .select("role")
+                .eq(
+                    "id",
+                    currentUser.id
+                )
+                .maybeSingle(),
+
+            supabaseClient
+                .from("donors")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                ),
+
+            supabaseClient
+                .from("recipients")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                ),
+
+            supabaseClient
+                .from("inventory")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                ),
+
+            supabaseClient
+                .from("match_history")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                ),
+
+            supabaseClient
+                .from("inventory_history")
+                .select("*")
+                .order(
+                    "changed_at",
+                    {
+                        ascending: false
+                    }
+                )
+
         ]);
 
-    if (currentUser?.id !== loadingUserId) {
+
+    if (
+        currentUser?.id !==
+        loadingUserId
+    ) {
+
         return;
     }
 
-    const failedQuery = [donorResult, recipientResult, inventoryResult, matchResult]
-        .find(result => result.error);
 
-    if (failedQuery) {
-        showToast("Unable to load records", failedQuery.error.message);
-        return;
+    currentAppRole =
+        profileResult.data?.role ||
+        "member";
+
+
+    donors =
+        (donorResult.data || [])
+            .map(mapDonor);
+
+
+    recipients =
+        (recipientResult.data || [])
+            .map(mapRecipient);
+
+
+    /* =====================================================
+       FIXED ORGAN INVENTORY LOADING
+       =====================================================
+
+       Priority:
+
+       1. If Supabase has real inventory,
+          use the real records.
+
+       2. If Supabase inventory is empty,
+          use demoInventory.
+
+       3. If the inventory query fails,
+          also use demoInventory so the
+          Available Organs section does not
+          become blank.
+    ===================================================== */
+
+    if (inventoryResult.error) {
+
+        inventory =
+            demoInventory.map(
+                (item, index) => ({
+
+                    id:
+                        `demo-${index + 1}`,
+
+                    organ:
+                        item.organ,
+
+                    blood:
+                        item.blood,
+
+                    hospital:
+                        item.hospital,
+
+                    status:
+                        item.status,
+
+                    updated:
+                        item.updated,
+
+                    ownerId:
+                        null,
+
+                    demo:
+                        true
+
+                })
+            );
+
     }
 
-    currentAppRole = profileResult.data?.role || "member";
-    donors = donorResult.data.map(mapDonor);
-    recipients = recipientResult.data.map(mapRecipient);
-    inventory = [
-        ...demoInventory,
-        ...inventoryResult.data.map(row => ({
-            id: row.id,
-            organ: row.organ,
-            blood: row.blood_group,
-            hospital: row.hospital_name,
-            status: row.status,
-            updated: new Date(row.updated_at).toLocaleString()
-        }))
-    ];
-    matchHistory = matchResult.data.map(row => ({
-        id: row.id,
-        organ: row.organ,
-        blood: row.blood_group,
-        urgency: row.urgency,
-        matchCount: row.match_count,
-        timestamp: new Date(row.created_at).toLocaleString()
-    }));
-    requests = recipients.map(recipient => ({
-        id: recipient.id,
-        name: recipient.name,
-        organ: recipient.organ,
-        blood: recipient.blood,
-        hospital: recipient.hospital,
-        urgency: recipient.urgency,
-        status: recipient.status
-    }));
+    else if (
+        inventoryResult.data &&
+        inventoryResult.data.length > 0
+    ) {
+
+        inventory =
+            inventoryResult.data.map(
+                row => ({
+
+                    id:
+                        row.id,
+
+                    organ:
+                        row.organ,
+
+                    blood:
+                        row.blood_group,
+
+                    hospital:
+                        row.hospital_name,
+
+                    status:
+                        row.status,
+
+                    updated:
+                        row.updated_at
+                            ? new Date(
+                                row.updated_at
+                            ).toLocaleString()
+                            : "Recently updated",
+
+                    ownerId:
+                        row.owner_id,
+
+                    demo:
+                        false
+
+                })
+            );
+
+    }
+
+    else {
+
+        /*
+           Supabase is working,
+           but the inventory table is empty.
+
+           Use demonstration inventory.
+        */
+
+        inventory =
+            demoInventory.map(
+                (item, index) => ({
+
+                    id:
+                        `demo-${index + 1}`,
+
+                    organ:
+                        item.organ,
+
+                    blood:
+                        item.blood,
+
+                    hospital:
+                        item.hospital,
+
+                    status:
+                        item.status,
+
+                    updated:
+                        item.updated,
+
+                    ownerId:
+                        null,
+
+                    demo:
+                        true
+
+                })
+            );
+
+    }
+
+
+    inventoryHistory =
+        (inventoryHistoryResult.data || [])
+            .map(row => ({
+
+                organ:
+                    row.organ,
+
+                blood:
+                    row.blood_group,
+
+                hospital:
+                    row.hospital_name,
+
+                action:
+                    row.action,
+
+                previousStatus:
+                    row.old_status,
+
+                status:
+                    row.new_status,
+
+                updatedBy:
+                    row.changed_by ===
+                    currentUser.id
+                        ? "You"
+                        : "Hospital staff",
+
+                updated:
+                    new Date(
+                        row.changed_at
+                    ).toLocaleString()
+
+            }));
+
+
+    matchHistory =
+        (matchResult.data || [])
+            .map(row => ({
+
+                id:
+                    row.id,
+
+                organ:
+                    row.organ,
+
+                blood:
+                    row.blood_group,
+
+                urgency:
+                    row.urgency,
+
+                matchCount:
+                    row.match_count,
+
+                timestamp:
+                    new Date(
+                        row.created_at
+                    ).toLocaleString()
+
+            }));
+
+
+    requests =
+        recipients.map(
+            recipient => ({
+
+                id:
+                    recipient.id,
+
+                name:
+                    recipient.name,
+
+                organ:
+                    recipient.organ,
+
+                blood:
+                    recipient.blood,
+
+                hospital:
+                    recipient.hospital,
+
+                urgency:
+                    recipient.urgency,
+
+                status:
+                    recipient.status
+
+            })
+        );
+
 
     renderAuthState();
     renderData();
 
+
+    if (inventoryResult.error) {
+
+        showToast(
+            "Demo availability loaded",
+            "Supabase inventory could not load, so demonstration organs are being displayed."
+        );
+
+    }
+
+    else if (
+        inventoryHistoryResult.error
+    ) {
+
+        showToast(
+            "Availability history needs setup",
+            "Run supabase-inventory-history-migration.sql. Current availability will still load."
+        );
+
+    }
+
+    else {
+
+        const failedQuery =
+            [
+                profileResult,
+                donorResult,
+                recipientResult,
+                matchResult
+            ]
+            .find(
+                result =>
+                    result.error
+            );
+
+
+        if (failedQuery) {
+
+            showToast(
+                "Some records could not load",
+                failedQuery.error.message
+            );
+
+        }
+
+    }
+
 }
 
 
+/* =========================================================
+   INITIALIZE SUPABASE
+========================================================= */
+
 async function initializeSupabase() {
 
-    const config = window.LIFELINK_SUPABASE_CONFIG;
+    const config =
+        window.LIFELINK_SUPABASE_CONFIG;
+
 
     if (
         !config?.url ||
         !config?.anonKey ||
-        config.url.includes("YOUR_PROJECT") ||
-        config.anonKey.includes("YOUR_SUPABASE") ||
+        config.url.includes(
+            "YOUR_PROJECT"
+        ) ||
+        config.anonKey.includes(
+            "YOUR_SUPABASE"
+        ) ||
         !window.supabase?.createClient
     ) {
+
         renderAuthState();
-        showToast("Supabase setup needed", "Add your project URL and anon key in supabase-config.js.");
+
+        showToast(
+            "Supabase setup needed",
+            "Add your project URL and anon key in supabase-config.js."
+        );
+
         return;
     }
 
-    supabaseClient = window.supabase.createClient(config.url, config.anonKey);
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
-        window.setTimeout(() => {
-            currentUser = session?.user || null;
-            loadApplicationData();
-        }, 0);
-    });
 
-    const { data, error } = await supabaseClient.auth.getSession();
+    supabaseClient =
+        window.supabase.createClient(
+            config.url,
+            config.anonKey
+        );
+
+
+    supabaseClient.auth.onAuthStateChange(
+        (_event, session) => {
+
+            window.setTimeout(
+                () => {
+
+                    currentUser =
+                        session?.user ||
+                        null;
+
+                    loadApplicationData();
+
+                },
+                0
+            );
+
+        }
+    );
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient.auth.getSession();
+
 
     if (error) {
-        showToast("Authentication error", error.message);
+
+        showToast(
+            "Authentication error",
+            error.message
+        );
+
         return;
     }
 
-    currentUser = data.session?.user || null;
+
+    currentUser =
+        data.session?.user ||
+        null;
+
+
     await loadApplicationData();
 
 }
 
 
+/* =========================================================
+   REQUIRE AUTHENTICATION
+========================================================= */
+
 function requireAuthentication() {
 
-    if (currentUser && supabaseClient) {
+    if (
+        currentUser &&
+        supabaseClient
+    ) {
+
         return true;
     }
 
-    loginModal.classList.add("active");
+
+    loginModal.classList.add(
+        "active"
+    );
+
+
     showToast(
-        supabaseClient ? "Sign in required" : "Supabase setup needed",
+
+        supabaseClient
+            ? "Sign in required"
+            : "Supabase setup needed",
+
         supabaseClient
             ? "Create an account or sign in before submitting a record."
             : "Configure Supabase before submitting a record."
+
     );
+
 
     return false;
 
 }
 
 
-async function toggleAuthentication(event) {
+/* =========================================================
+   LOGIN / LOGOUT TOGGLE
+========================================================= */
+
+async function toggleAuthentication(
+    event
+) {
 
     event?.preventDefault();
 
-    if (currentUser && supabaseClient) {
-        const { error } = await supabaseClient.auth.signOut();
+
+    if (
+        currentUser &&
+        supabaseClient
+    ) {
+
+        const {
+            error
+        } =
+            await supabaseClient.auth.signOut();
+
 
         if (error) {
-            showToast("Sign out failed", error.message);
+
+            showToast(
+                "Sign out failed",
+                error.message
+            );
+
             return;
         }
 
-        currentUser = null;
+
+        currentUser =
+            null;
+
+
         clearPrivateData();
-        showToast("Signed out", "Your account has been signed out.");
+
+
+        showToast(
+            "Signed out",
+            "Your account has been signed out."
+        );
+
         return;
     }
 
-    loginModal.classList.add("active");
+
+    loginModal.classList.add(
+        "active"
+    );
 
 }
 
@@ -1347,17 +1911,26 @@ donorForm.addEventListener(
 
         event.preventDefault();
 
+
         if (!requireAuthentication()) {
+
             return;
         }
 
+
         const donor = {
+
             name:
                 document.getElementById(
                     "donorName"
                 ).value.trim(),
 
-            age: Number(document.getElementById("donorAge").value),
+            age:
+                Number(
+                    document.getElementById(
+                        "donorAge"
+                    ).value
+                ),
 
             blood_group:
                 document.getElementById(
@@ -1379,22 +1952,38 @@ donorForm.addEventListener(
                     "donorPhone"
                 ).value.trim(),
 
-            owner_id: currentUser.id,
-            consent: document.getElementById("donorConsent").checked
+            owner_id:
+                currentUser.id,
+
+            consent:
+                document.getElementById(
+                    "donorConsent"
+                ).checked
 
         };
 
-        const { error } = await supabaseClient
-            .from("donors")
-            .insert(donor);
+
+        const {
+            error
+        } =
+            await supabaseClient
+                .from("donors")
+                .insert(donor);
+
 
         if (error) {
-            showToast("Donor registration failed", error.message);
+
+            showToast(
+                "Donor registration failed",
+                error.message
+            );
+
             return;
         }
 
 
         donorForm.reset();
+
 
         await loadApplicationData();
 
@@ -1402,6 +1991,229 @@ donorForm.addEventListener(
         showToast(
             "Donor Registered",
             `${donor.name} has been successfully added.`
+        );
+
+    }
+);
+
+
+/* =========================================================
+   INVENTORY REGISTRATION
+========================================================= */
+
+inventoryForm.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+
+        if (
+            !currentUser ||
+            !["hospital", "admin"]
+                .includes(
+                    currentAppRole
+                )
+        ) {
+
+            showToast(
+                "Staff access required",
+                "Only approved hospital staff can report organ availability."
+            );
+
+            return;
+        }
+
+
+        const {
+            error
+        } =
+            await supabaseClient
+                .from("inventory")
+                .insert({
+
+                    owner_id:
+                        currentUser.id,
+
+                    organ:
+                        document.getElementById(
+                            "inventoryOrgan"
+                        ).value,
+
+                    blood_group:
+                        document.getElementById(
+                            "inventoryBlood"
+                        ).value,
+
+                    hospital_name:
+                        document.getElementById(
+                            "inventoryHospital"
+                        ).value,
+
+                    status:
+                        document.getElementById(
+                            "inventoryStatus"
+                        ).value
+
+                });
+
+
+        if (error) {
+
+            showToast(
+                "Availability was not added",
+                error.message
+            );
+
+            return;
+        }
+
+
+        inventoryForm.reset();
+
+
+        await loadApplicationData();
+
+
+        showToast(
+            "Availability added",
+            "The organ is now listed in inventory."
+        );
+
+    }
+);
+
+
+/* =========================================================
+   INVENTORY UPDATE
+========================================================= */
+
+inventoryBody.addEventListener(
+    "click",
+    async function(event) {
+
+        const saveButton =
+            event.target.closest(
+                "[data-inventory-save]"
+            );
+
+
+        if (!saveButton) {
+
+            return;
+        }
+
+
+        const item =
+            inventory.find(
+                record =>
+                    record.id ===
+                    saveButton.dataset
+                        .inventorySave
+            );
+
+
+        const nextStatus =
+            saveButton
+                .closest("tr")
+                .querySelector(
+                    "[data-inventory-status]"
+                )
+                .value;
+
+
+        if (
+            !item ||
+            item.ownerId !==
+                currentUser?.id
+        ) {
+
+            showToast(
+                "Update not allowed",
+                "You can only update inventory reported by your hospital."
+            );
+
+            return;
+        }
+
+
+        if (
+            item.status ===
+            nextStatus
+        ) {
+
+            showToast(
+                "No change made",
+                "Choose a different availability status first."
+            );
+
+            return;
+        }
+
+
+        saveButton.disabled =
+            true;
+
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+
+                .from("inventory")
+
+                .update({
+
+                    status:
+                        nextStatus,
+
+                    updated_at:
+                        new Date()
+                            .toISOString()
+
+                })
+
+                .eq(
+                    "id",
+                    item.id
+                )
+
+                .eq(
+                    "owner_id",
+                    currentUser.id
+                )
+
+                .select("id")
+
+                .maybeSingle();
+
+
+        if (
+            error ||
+            !data
+        ) {
+
+            saveButton.disabled =
+                false;
+
+
+            showToast(
+                "Availability was not updated",
+                error?.message ||
+                    "The record could not be updated."
+            );
+
+            return;
+        }
+
+
+        await loadApplicationData();
+
+
+        showToast(
+            "Availability updated",
+            "The change was added to organ availability history."
         );
 
     }
@@ -1418,17 +2230,26 @@ recipientForm.addEventListener(
 
         event.preventDefault();
 
+
         if (!requireAuthentication()) {
+
             return;
         }
 
+
         const recipient = {
+
             name:
                 document.getElementById(
                     "recipientName"
                 ).value.trim(),
 
-            age: Number(document.getElementById("recipientAge").value),
+            age:
+                Number(
+                    document.getElementById(
+                        "recipientAge"
+                    ).value
+                ),
 
             blood_group:
                 document.getElementById(
@@ -1455,22 +2276,36 @@ recipientForm.addEventListener(
                     "recipientPhone"
                 ).value.trim(),
 
-            owner_id: currentUser.id,
-            status: "AI Match Pending"
+            owner_id:
+                currentUser.id,
+
+            status:
+                "AI Match Pending"
 
         };
 
-        const { error } = await supabaseClient
-            .from("recipients")
-            .insert(recipient);
+
+        const {
+            error
+        } =
+            await supabaseClient
+                .from("recipients")
+                .insert(recipient);
+
 
         if (error) {
-            showToast("Request registration failed", error.message);
+
+            showToast(
+                "Request registration failed",
+                error.message
+            );
+
             return;
         }
 
 
         recipientForm.reset();
+
 
         await loadApplicationData();
 
@@ -1500,9 +2335,14 @@ function calculateMatchScore(
     let reasons = [];
 
 
-    /* Organ Match */
+    /* =====================================================
+       ORGAN MATCH
+    ===================================================== */
 
-    if (donor.organ === organ) {
+    if (
+        donor.organ ===
+        organ
+    ) {
 
         score += 50;
 
@@ -1513,9 +2353,14 @@ function calculateMatchScore(
     }
 
 
-    /* Blood Match */
+    /* =====================================================
+       BLOOD MATCH
+    ===================================================== */
 
-    if (donor.blood === blood) {
+    if (
+        donor.blood ===
+        blood
+    ) {
 
         score += 35;
 
@@ -1526,7 +2371,9 @@ function calculateMatchScore(
     }
 
 
-    /* Location */
+    /* =====================================================
+       LOCATION
+    ===================================================== */
 
     if (
         donor.city.toLowerCase() ===
@@ -1542,9 +2389,14 @@ function calculateMatchScore(
     }
 
 
-    /* Urgency */
+    /* =====================================================
+       URGENCY
+    ===================================================== */
 
-    if (urgency === "Critical") {
+    if (
+        urgency ===
+        "Critical"
+    ) {
 
         score += 10;
 
@@ -1554,7 +2406,10 @@ function calculateMatchScore(
 
     }
 
-    else if (urgency === "High") {
+    else if (
+        urgency ===
+        "High"
+    ) {
 
         score += 7;
 
@@ -1576,8 +2431,15 @@ function calculateMatchScore(
 
 
     return {
-        score: Math.min(score, 100),
+
+        score:
+            Math.min(
+                score,
+                100
+            ),
+
         reasons
+
     };
 
 }
@@ -1593,9 +2455,12 @@ matchForm.addEventListener(
 
         event.preventDefault();
 
+
         if (!requireAuthentication()) {
+
             return;
         }
+
 
         const organ =
             document.getElementById(
@@ -1627,71 +2492,116 @@ matchForm.addEventListener(
         const candidates =
             donors.filter(
                 donor =>
-                    donor.organ === organ
+                    donor.organ ===
+                    organ
             );
 
 
         const scoredMatches =
-            candidates.map(donor => {
+            candidates.map(
+                donor => {
 
-                const result =
-                    calculateMatchScore(
+                    const result =
+                        calculateMatchScore(
+                            donor,
+                            organ,
+                            blood,
+                            urgency
+                        );
+
+
+                    return {
+
                         donor,
-                        organ,
-                        blood,
-                        urgency
-                    );
 
+                        ...result
 
-                return {
-                    donor,
-                    ...result
-                };
+                    };
 
-            });
+                }
+            );
 
 
         scoredMatches.sort(
             (a, b) =>
-                b.score - a.score
+                b.score -
+                a.score
         );
 
 
         const topMatches =
-            scoredMatches.slice(0, 5);
+            scoredMatches.slice(
+                0,
+                5
+            );
 
 
-        const { error: historyError } = await supabaseClient
-            .from("match_history")
-            .insert({
-                owner_id: currentUser.id,
-                organ,
-                blood_group: blood,
-                urgency,
-                match_count: topMatches.length
-            });
+        const {
+            error:
+                historyError
+        } =
+            await supabaseClient
+                .from("match_history")
+                .insert({
+
+                    owner_id:
+                        currentUser.id,
+
+                    organ,
+
+                    blood_group:
+                        blood,
+
+                    urgency,
+
+                    match_count:
+                        topMatches.length
+
+                });
+
 
         if (historyError) {
-            showToast("Could not save match history", historyError.message);
+
+            showToast(
+                "Could not save match history",
+                historyError.message
+            );
+
             return;
         }
 
+
         matchHistory.unshift({
-            id: Date.now(),
+
+            id:
+                Date.now(),
+
             organ,
+
             blood,
+
             urgency,
-            matchCount: topMatches.length,
-            timestamp: new Date().toLocaleString()
+
+            matchCount:
+                topMatches.length,
+
+            timestamp:
+                new Date()
+                    .toLocaleString()
+
         });
 
 
         updateStats();
 
 
-        /* No matches */
+        /* =================================================
+           NO MATCHES
+        ================================================= */
 
-        if (!topMatches.length) {
+        if (
+            !topMatches.length
+        ) {
 
             matchResults.innerHTML = `
 
@@ -1731,7 +2641,9 @@ matchForm.addEventListener(
         }
 
 
-        /* Results */
+        /* =================================================
+           MATCH RESULTS
+        ================================================= */
 
         matchResults.innerHTML = `
 
@@ -1767,14 +2679,21 @@ matchForm.addEventListener(
             </p>
 
 
-            ${topMatches.map(
-                (item, index) => `
+            ${
+                topMatches.map(
+                    (item, index) => `
 
                 <div class="match-item">
 
                     <div class="match-avatar">
 
-                        ${escapeHtml(item.donor.name.charAt(0).toUpperCase())}
+                        ${
+                            escapeHtml(
+                                item.donor.name
+                                    .charAt(0)
+                                    .toUpperCase()
+                            )
+                        }
 
                     </div>
 
@@ -1782,22 +2701,37 @@ matchForm.addEventListener(
                     <div class="match-info">
 
                         <strong>
-                            ${escapeHtml(item.donor.name)}
+                            ${escapeHtml(
+                                item.donor.name
+                            )}
                         </strong>
 
                         <span>
-                            ${escapeHtml(item.donor.organ)}
+                            ${escapeHtml(
+                                item.donor.organ
+                            )}
+
                             •
-                            ${escapeHtml(item.donor.blood)}
+
+                            ${escapeHtml(
+                                item.donor.blood
+                            )}
+
                             •
-                            ${escapeHtml(item.donor.city)}
+
+                            ${escapeHtml(
+                                item.donor.city
+                            )}
+
                         </span>
 
                         <div class="match-reason">
 
-                            ${item.reasons.join(
-                                " • "
-                            )}
+                            ${
+                                item.reasons.join(
+                                    " • "
+                                )
+                            }
 
                         </div>
 
@@ -1813,7 +2747,8 @@ matchForm.addEventListener(
                 </div>
 
             `
-            ).join("")}
+                ).join("")
+            }
 
 
             <div style="
@@ -1870,17 +2805,29 @@ hospitalSearch.addEventListener(
 ========================================================= */
 
 document
-    .getElementById("openLogin")
-    .addEventListener("click", toggleAuthentication);
+    .getElementById(
+        "openLogin"
+    )
+    .addEventListener(
+        "click",
+        toggleAuthentication
+    );
 
 
 document
-    .getElementById("mobileAuth")
-    .addEventListener("click", toggleAuthentication);
+    .getElementById(
+        "mobileAuth"
+    )
+    .addEventListener(
+        "click",
+        toggleAuthentication
+    );
 
 
 document
-    .getElementById("closeLogin")
+    .getElementById(
+        "closeLogin"
+    )
     .addEventListener(
         "click",
         function() {
@@ -1917,17 +2864,21 @@ loginModal.addEventListener(
 ========================================================= */
 
 document
-    .getElementById("loginForm")
+    .getElementById(
+        "loginForm"
+    )
     .addEventListener(
         "submit",
         async function(event) {
 
             event.preventDefault();
 
+
             const email =
                 document.getElementById(
                     "loginEmail"
-                ).value
+                )
+                .value
                 .trim()
                 .toLowerCase();
 
@@ -1937,38 +2888,123 @@ document
                     "loginPassword"
                 ).value;
 
+
             if (!supabaseClient) {
-                showToast("Supabase setup needed", "Add your project URL and anon key in supabase-config.js.");
+
+                showToast(
+                    "Supabase setup needed",
+                    "Add your project URL and anon key in supabase-config.js."
+                );
+
                 return;
             }
+
 
             let result;
 
-            if (isSignUpMode) {
-                const displayName = document.getElementById("signupName").value.trim();
-                result = await supabaseClient.auth.signUp({
-                    email,
-                    password,
-                    options: { data: { display_name: displayName } }
-                });
-            } else {
-                result = await supabaseClient.auth.signInWithPassword({ email, password });
+
+            if (
+                isSignUpMode
+            ) {
+
+                const displayName =
+                    document.getElementById(
+                        "signupName"
+                    ).value.trim();
+
+
+                result =
+                    await supabaseClient
+                        .auth
+                        .signUp({
+
+                            email,
+
+                            password,
+
+                            options: {
+                                data: {
+                                    display_name:
+                                        displayName
+                                }
+                            }
+
+                        });
+
             }
 
-            if (result.error) {
-                showToast(isSignUpMode ? "Sign up failed" : "Login failed", result.error.message);
+            else {
+
+                result =
+                    await supabaseClient
+                        .auth
+                        .signInWithPassword({
+                            email,
+                            password
+                        });
+
+            }
+
+
+            if (
+                result.error
+            ) {
+
+                showToast(
+                    isSignUpMode
+                        ? "Sign up failed"
+                        : "Login failed",
+
+                    result.error.message
+                );
+
                 return;
             }
 
-            if (isSignUpMode && !result.data.session) {
-                loginModal.classList.remove("active");
-                showToast("Check your email", "Confirm your email address, then sign in.");
-            } else {
-                currentUser = result.data.user;
-                loginModal.classList.remove("active");
-                await loadApplicationData();
-                showToast(isSignUpMode ? "Account created" : "Login successful", "Signed in as " + email + ".");
+
+            if (
+                isSignUpMode &&
+                !result.data.session
+            ) {
+
+                loginModal.classList.remove(
+                    "active"
+                );
+
+
+                showToast(
+                    "Check your email",
+                    "Confirm your email address, then sign in."
+                );
+
             }
+
+            else {
+
+                currentUser =
+                    result.data.user;
+
+
+                loginModal.classList.remove(
+                    "active"
+                );
+
+
+                await loadApplicationData();
+
+
+                showToast(
+                    isSignUpMode
+                        ? "Account created"
+                        : "Login successful",
+
+                    "Signed in as " +
+                        email +
+                        "."
+                );
+
+            }
+
 
             this.reset();
 
@@ -1976,21 +3012,65 @@ document
     );
 
 
+/* =========================================================
+   AUTH MODE TOGGLE
+========================================================= */
+
 document
-    .getElementById("authModeToggle")
-    .addEventListener("click", function() {
+    .getElementById(
+        "authModeToggle"
+    )
+    .addEventListener(
+        "click",
+        function() {
 
-        isSignUpMode = !isSignUpMode;
-        document.getElementById("signupNameGroup").hidden = !isSignUpMode;
-        document.getElementById("signupName").required = isSignUpMode;
-        document.getElementById("loginTitle").textContent = isSignUpMode ? "Create Account" : "Welcome Back";
-        document.getElementById("loginDescription").textContent = isSignUpMode
-            ? "Create an account to register and manage your records."
-            : "Sign in to your LifeLink account.";
-        document.getElementById("authSubmitLabel").textContent = isSignUpMode ? "Create account" : "Login";
-        this.textContent = isSignUpMode ? "Already have an account? Sign in" : "New to LifeLink? Create an account";
+            isSignUpMode =
+                !isSignUpMode;
 
-    });
+
+            document.getElementById(
+                "signupNameGroup"
+            ).hidden =
+                !isSignUpMode;
+
+
+            document.getElementById(
+                "signupName"
+            ).required =
+                isSignUpMode;
+
+
+            document.getElementById(
+                "loginTitle"
+            ).textContent =
+                isSignUpMode
+                    ? "Create Account"
+                    : "Welcome Back";
+
+
+            document.getElementById(
+                "loginDescription"
+            ).textContent =
+                isSignUpMode
+                    ? "Create an account to register and manage your records."
+                    : "Sign in to your LifeLink account.";
+
+
+            document.getElementById(
+                "authSubmitLabel"
+            ).textContent =
+                isSignUpMode
+                    ? "Create account"
+                    : "Login";
+
+
+            this.textContent =
+                isSignUpMode
+                    ? "Already have an account? Sign in"
+                    : "New to LifeLink? Create an account";
+
+        }
+    );
 
 
 /* =========================================================
@@ -1998,25 +3078,49 @@ document
 ========================================================= */
 
 document
-    .getElementById("logoutBtn")
+    .getElementById(
+        "logoutBtn"
+    )
     .addEventListener(
         "click",
         async function() {
 
             if (!supabaseClient) {
+
                 return;
             }
 
-            const { error } = await supabaseClient.auth.signOut();
+
+            const {
+                error
+            } =
+                await supabaseClient
+                    .auth
+                    .signOut();
+
 
             if (error) {
-                showToast("Sign out failed", error.message);
+
+                showToast(
+                    "Sign out failed",
+                    error.message
+                );
+
                 return;
             }
 
-            currentUser = null;
+
+            currentUser =
+                null;
+
+
             clearPrivateData();
-            showToast("Signed out", "Your account has been signed out.");
+
+
+            showToast(
+                "Signed out",
+                "Your account has been signed out."
+            );
 
         }
     );
@@ -2052,20 +3156,22 @@ menuBtn.addEventListener(
 
 navbar
     .querySelectorAll("a")
-    .forEach(link => {
+    .forEach(
+        link => {
 
-        link.addEventListener(
-            "click",
-            function() {
+            link.addEventListener(
+                "click",
+                function() {
 
-                navbar.classList.remove(
-                    "active"
-                );
+                    navbar.classList.remove(
+                        "active"
+                    );
 
-            }
-        );
+                }
+            );
 
-    });
+        }
+    );
 
 
 /* =========================================================
@@ -2073,7 +3179,9 @@ navbar
 ========================================================= */
 
 document
-    .getElementById("closeToast")
+    .getElementById(
+        "closeToast"
+    )
     .addEventListener(
         "click",
         function() {
@@ -2101,11 +3209,11 @@ document.getElementById(
 ========================================================= */
 
 renderHospitals();
+
 populateHospitalSelect();
 
-inventory = [...demoInventory];
-
 renderData();
+
 initializeSupabase();
 
 
@@ -2118,8 +3226,12 @@ console.log(
     "font-size:18px;font-weight:bold;color:#0b63f6;"
 );
 
+
 console.log(
     "Hackathon Prototype"
 );
 
-console.log("Supabase-backed records are loaded after authentication.");
+
+console.log(
+    "Supabase-backed records are loaded after authentication."
+);

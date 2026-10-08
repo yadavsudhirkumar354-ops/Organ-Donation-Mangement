@@ -8,6 +8,8 @@ Create a project at [supabase.com](https://supabase.com/) and keep its database 
 
 In the Supabase dashboard, open **SQL Editor**, paste the contents of `supabase-schema.sql`, and run it. The script creates the profile, donor, recipient, inventory, and match-history tables, a profile trigger for new accounts, and row-level security policies.
 
+To enable inventory updates and their audit history, also run `supabase-inventory-history-migration.sql` in SQL Editor. It records additions, status changes, and removals. Existing inventory rows appear in the current availability list; history starts recording when this migration is installed.
+
 Members can read and manage only their own donor and recipient records and match history. Users with an administrator-approved `hospital` or `admin` profile can read donor and recipient records across accounts. All signed-in users can read inventory; only approved staff can manage inventory they own. Public sign-up always creates a `member` profile.
 
 ## 3. Add the browser credentials
